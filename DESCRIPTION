@@ -1,0 +1,40 @@
+Package: CPTACdata
+Title: Append CPTAC Proteomics Data to MultiAssayExperiment Objects
+Version: 0.0.0.9000
+Authors@R: 
+    person("Marcel", "Ramos", , "marcel.ramos@sph.cuny.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3242-0582"))
+Description: Integrates proteomic data from the Clinical Proteomic
+    Tumor Analysis Consortium (CPTAC) into existing MultiAssayExperiment
+    objects containing The Cancer Genome Atlas (TCGA) patient barcodes.
+    The package queries the Proteomic Data Commons (PDC) GraphQL API
+    to resolve studies by disease type and fetch quantitative protein
+    log2 ratio matrices, biospecimen identifiers, and clinical metadata.
+    It harmonizes TCGA barcodes with CPTAC case identifiers, constructs
+    SummarizedExperiment objects, merges clinical attributes into colData,
+    and appends the proteomic assays to the MultiAssayExperiment.
+License: Artistic-2.0
+URL: https://github.com/LiNk-NY/CPTACdata
+BugReports: https://github.com/LiNk-NY/CPTACdata/issues
+biocViews: Software, Proteomics, BiomedicalInformatics
+Depends: R (>= 4.1.0)
+Imports: 
+    httr2,
+    methods,
+    MultiAssayExperiment,
+    S4Vectors,
+    stats,
+    SummarizedExperiment,
+    TCGAutils
+Suggests:
+    BiocStyle,
+    curatedTCGAData,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1
