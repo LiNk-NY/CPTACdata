@@ -46,10 +46,10 @@
     tables <- list()
     function(pdc_study_id) {
         if (is.null(tables[[pdc_study_id]])) {
-            q <- sprintf(
-                '{ biospecimenPerStudy(pdc_study_id: "%s" acceptDUA: true) { %s } }',
-                pdc_study_id, paste(.BIOSPECIMEN_FIELDS, collapse = " ")
-            )
+            query <- sprintf(paste0(
+                '{ biospecimenPerStudy(pdc_study_id: "%s" acceptDUA: true) ',
+                '{ %s } }'
+            ), pdc_study_id, paste(.BIOSPECIMEN_FIELDS, collapse = " "))
             tables[[pdc_study_id]] <<- .recordsToDF(
                 .pdcGQL(query)[["biospecimenPerStudy"]], .BIOSPECIMEN_FIELDS
             )
@@ -60,10 +60,10 @@
 
 # Features x aliquot-label numeric matrix for a study.
 .pdcQuantMatrix <- function(pdc_study_id, data_type = "log2_ratio") {
-    q <- sprintf(
-        '{ quantDataMatrix(pdc_study_id: "%s" data_type: "%s" acceptDUA: true) }',
-        pdc_study_id, data_type
-    )
+    query <- sprintf(paste0(
+        '{ quantDataMatrix(pdc_study_id: "%s" data_type: "%s" ',
+        'acceptDUA: true) }'
+    ), pdc_study_id, data_type)
     .parseQuantMatrix(.pdcGQL(query, timeout = 600)[["quantDataMatrix"]])
 }
 
