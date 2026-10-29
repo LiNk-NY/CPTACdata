@@ -161,10 +161,10 @@
         stringsAsFactors = FALSE
     )
     # is_latest_version may arrive as a boolean or a "Yes"/"No"-style string
-    catalog$is_latest_version <-
-        tolower(catalog$is_latest_version) %in% c("yes", "true", "1", "y")
+    catalog[["is_latest_version"]] <-
+        tolower(catalog[["is_latest_version"]]) %in% c("yes", "true", "1", "y")
     if (latest_only) {
-        catalog <- catalog[catalog$is_latest_version, , drop = FALSE]
+        catalog <- catalog[catalog[["is_latest_version"]], , drop = FALSE]
     }
     rownames(catalog) <- NULL
     catalog
