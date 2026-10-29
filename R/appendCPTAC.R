@@ -44,75 +44,121 @@
 #' mae <- appendCPTAC(mae, fraction = "Phosphoproteome")
 #' }
 #' @export
-appendCPTAC <- function(mae, project = NULL,
+appendCPTAC <- function(
+    mae,
+    project = NULL,
     fraction = c("Proteome", "Phosphoproteome", "Glycoproteome"),
-    dry_run = FALSE) {
-    stopifnot(methods::is(mae, "MultiAssayExperiment"),
-              is.logical(dry_run), length(dry_run) == 1L)
+    dry_run = FALSE
+) {
+    stopifnot(
+        methods::is(mae, "MultiAssayExperiment"),
+        is.logical(dry_run),
+        length(dry_run) == 1L
+    )
     fraction <- match.arg(fraction)
 
-    project <- if (is.null(project)) .detectTcgaProject(mae)
-               else paste0("TCGA-", sub("^TCGA-", "", toupper(project)))
+    project <- if (is.null(project)) {
+        .detectTcgaProject(mae)
+    } else {
+        paste0("TCGA-", sub("^TCGA-", "", toupper(project)))
+    }
 
     studies <- CPTACdata::cptacProjects
-    studies <- studies[studies$tcga_project %in% project &
-                       studies$analytical_fraction %in% fraction, ,
-                       drop = FALSE]
-    if (nrow(studies) == 0L)
-        stop(sprintf("No CPTAC %s data for %s. ", fraction, project),
-             "See ?cptacProjects.", call. = FALSE)
+    studies <- studies[
+        studies$tcga_project %in%
+            project &
+            studies$analytical_fraction %in% fraction,
+        ,
+        drop = FALSE
+    ]
+    if (nrow(studies) == 0L) {
+        stop(
+            sprintf("No CPTAC %s data for %s. ", fraction, project),
+            "See ?cptacProjects.",
+            call. = FALSE
+        )
+    }
 
     patients <- rownames(MultiAssayExperiment::colData(mae))
     # NULL for studies without a quantification matrix: nothing to fetch
-    specimens <- lapply(seq_len(nrow(studies)), function(i)
-        if (!is.na(studies$data_type[i]))
-            .tcgaSpecimens(studies[i, , drop = FALSE]))
-    matched <- lapply(specimens, function(studySpecimens)
-        studySpecimens[studySpecimens$case_submitter_id %in% patients, ,
-                       drop = FALSE])
+    specimens <- lapply(seq_len(nrow(studies)), function(i) {
+        if (!is.na(studies$data_type[i])) {
+            .tcgaSpecimens(studies[i, , drop = FALSE])
+        }
+    })
+    matched <- lapply(specimens, function(studySpecimens) {
+        studySpecimens[
+            studySpecimens$case_submitter_id %in% patients,
+            ,
+            drop = FALSE
+        ]
+    })
 
-    nPatients <- function(studySpecimens)
-        if (is.null(studySpecimens)) NA_integer_
-        else length(unique(studySpecimens$case_submitter_id))
-    if (dry_run)
+    nPatients <- function(studySpecimens) {
+        if (is.null(studySpecimens)) {
+            NA_integer_
+        } else {
+            length(unique(studySpecimens$case_submitter_id))
+        }
+    }
+    if (dry_run) {
         return(data.frame(
-            experiment       = studies$experiment,
-            pdc_study_id     = studies$pdc_study_id,
-            quant_available  = !is.na(studies$data_type),
-            mae_patients     = length(patients),
-            pdc_patients     = vapply(specimens, nPatients, integer(1L)),
+            experiment = studies$experiment,
+            pdc_study_id = studies$pdc_study_id,
+            quant_available = !is.na(studies$data_type),
+            mae_patients = length(patients),
+            pdc_patients = vapply(specimens, nPatients, integer(1L)),
             matched_patients = vapply(matched, nPatients, integer(1L)),
             stringsAsFactors = FALSE
         ))
+    }
 
     for (i in seq_len(nrow(studies))) {
         row <- studies[i, , drop = FALSE]
         experimentName <- row$experiment
         if (is.na(row$data_type)) {
-            warning(sprintf("%s (%s) has no quantification matrix in the ",
-                            row$pdc_name, row$pdc_study_id),
-                    "PDC; skipped.", call. = FALSE)
+            warning(
+                sprintf(
+                    "%s (%s) has no quantification matrix in the ",
+                    row$pdc_name,
+                    row$pdc_study_id
+                ),
+                "PDC; skipped.",
+                call. = FALSE
+            )
             next
         }
         if (nrow(matched[[i]]) == 0L) {
-            warning(sprintf("No patients in %s match the MAE; skipped.",
-                            row$pdc_study_id), call. = FALSE)
+            warning(
+                sprintf(
+                    "No patients in %s match the MAE; skipped.",
+                    row$pdc_study_id
+                ),
+                call. = FALSE
+            )
             next
         }
         if (experimentName %in% names(mae)) {
             message(sprintf("'%s' already present; skipped.", experimentName))
             next
         }
-        message(sprintf("Adding %s from %s (%d patients)...", experimentName,
-                        row$pdc_study_id, nPatients(matched[[i]])))
+        message(sprintf(
+            "Adding %s from %s (%d patients)...",
+            experimentName,
+            row$pdc_study_id,
+            nPatients(matched[[i]])
+        ))
         experiment <- .buildCptacSE(row, matched[[i]])
         sampleMap <- S4Vectors::DataFrame(
-            assay   = factor(rep(experimentName, ncol(experiment))),
+            assay = factor(rep(experimentName, ncol(experiment))),
             primary = TCGAutils::TCGAbarcode(colnames(experiment)),
             colname = colnames(experiment)
         )
-        mae <- c(mae, stats::setNames(list(experiment), experimentName),
-                 sampleMap = sampleMap)
+        mae <- c(
+            mae,
+            stats::setNames(list(experiment), experimentName),
+            sampleMap = sampleMap
+        )
     }
     mae
 }
@@ -123,15 +169,24 @@ appendCPTAC <- function(mae, project = NULL,
 .detectTcgaProject <- function(mae) {
     clinical <- MultiAssayExperiment::colData(mae)
     diseaseColumn <- grep("disease_code$", colnames(clinical), value = TRUE)[1L]
-    if (is.na(diseaseColumn))
-        stop("Cannot detect the TCGA project from colData; ",
-             "supply it, e.g. project = \"TCGA-OV\".", call. = FALSE)
+    if (is.na(diseaseColumn)) {
+        stop(
+            "Cannot detect the TCGA project from colData; ",
+            "supply it, e.g. project = \"TCGA-OV\".",
+            call. = FALSE
+        )
+    }
     codes <- unique(stats::na.omit(
         toupper(as.character(clinical[[diseaseColumn]]))
     ))
-    if (length(codes) != 1L)
-        stop("MAE spans several projects (", paste(codes, collapse = ", "),
-             "); supply project explicitly.", call. = FALSE)
+    if (length(codes) != 1L) {
+        stop(
+            "MAE spans several projects (",
+            paste(codes, collapse = ", "),
+            "); supply project explicitly.",
+            call. = FALSE
+        )
+    }
     paste0("TCGA-", codes)
 }
 
@@ -143,15 +198,20 @@ appendCPTAC <- function(mae, project = NULL,
 .tcgaSpecimens <- function(row) {
     biospecimens <- .pdcBiospecimenTable(row$pdc_study_id)
     keep <- startsWith(biospecimens$sample_submitter_id, "TCGA-") &
-            biospecimens$aliquot_status %in% "Qualified" &
-            !(tolower(biospecimens$pool) %in% "yes")
-    if (!is.na(row$pdc_disease_type))
+        biospecimens$aliquot_status %in% "Qualified" &
+        !(tolower(biospecimens$pool) %in% "yes")
+    if (!is.na(row$pdc_disease_type)) {
         keep <- keep & biospecimens$disease_type %in% row$pdc_disease_type
+    }
     biospecimens <- biospecimens[keep, , drop = FALSE]
-    if (nrow(biospecimens))
+    if (nrow(biospecimens)) {
         biospecimens <- biospecimens[
             TCGAutils::TCGAbarcode(biospecimens$sample_submitter_id) ==
-                biospecimens$case_submitter_id, , drop = FALSE]
+                biospecimens$case_submitter_id,
+            ,
+            drop = FALSE
+        ]
+    }
     biospecimens
 }
 
@@ -164,10 +224,12 @@ appendCPTAC <- function(mae, project = NULL,
     baseLabels <- sub("\\.[0-9]+$", "", labels)
     isFullBarcode <- startsWith(baseLabels, "TCGA-")
     sampleBarcodes <- paste0("TCGA-", baseLabels)
-    if (any(isFullBarcode))
+    if (any(isFullBarcode)) {
         sampleBarcodes[isFullBarcode] <- TCGAutils::TCGAbarcode(
-            baseLabels[isFullBarcode], sample = TRUE
+            baseLabels[isFullBarcode],
+            sample = TRUE
         )
+    }
     match(sampleBarcodes, biospecimens$sample_submitter_id)
 }
 
@@ -180,25 +242,38 @@ appendCPTAC <- function(mae, project = NULL,
     keep[keep] <- !duplicated(
         specimens$sample_submitter_id[specimenIndex[keep]]
     )
-    sampleData <- specimens[specimenIndex[keep],
-                            c("case_submitter_id", "aliquot_submitter_id",
-                              "sample_type"), drop = FALSE]
+    sampleData <- specimens[
+        specimenIndex[keep],
+        c("case_submitter_id", "aliquot_submitter_id", "sample_type"),
+        drop = FALSE
+    ]
     sampleData$pdc_column <- colnames(quantMatrix)[keep]
 
-    nMissing <- length(setdiff(specimens$case_submitter_id,
-                               sampleData$case_submitter_id))
-    if (nMissing)
-        message(sprintf("  %d matched patient(s) not in the %s matrix.",
-                        nMissing, row$pdc_study_id))
+    nMissing <- length(setdiff(
+        specimens$case_submitter_id,
+        sampleData$case_submitter_id
+    ))
+    if (nMissing) {
+        message(sprintf(
+            "  %d matched patient(s) not in the %s matrix.",
+            nMissing,
+            row$pdc_study_id
+        ))
+    }
 
     quantMatrix <- quantMatrix[, keep, drop = FALSE]
     colnames(quantMatrix) <- specimens$sample_submitter_id[specimenIndex[keep]]
     SummarizedExperiment::SummarizedExperiment(
-        assays   = stats::setNames(list(quantMatrix), row$data_type),
-        colData  = S4Vectors::DataFrame(sampleData,
-                                        row.names = colnames(quantMatrix)),
-        metadata = list(pdc_study_id = row$pdc_study_id,
-                        pdc_name = row$pdc_name, data_type = row$data_type,
-                        source = .PDC_URL)
+        assays = stats::setNames(list(quantMatrix), row$data_type),
+        colData = S4Vectors::DataFrame(
+            sampleData,
+            row.names = colnames(quantMatrix)
+        ),
+        metadata = list(
+            pdc_study_id = row$pdc_study_id,
+            pdc_name = row$pdc_name,
+            data_type = row$data_type,
+            source = .PDC_URL
+        )
     )
 }

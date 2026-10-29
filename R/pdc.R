@@ -13,30 +13,47 @@
         httr2::req_perform()
     body <- httr2::resp_body_json(response)
     if (httr2::resp_status(response) >= 400L || !is.null(body[["errors"]])) {
-        messages <- vapply(body[["errors"]],
-                           function(error) as.character(error[["message"]]),
-                           character(1L))
-        stop(sprintf("PDC API error (HTTP %d): %s",
-                     httr2::resp_status(response),
-                     paste(messages, collapse = "; ")), call. = FALSE)
+        messages <- vapply(
+            body[["errors"]],
+            function(error) as.character(error[["message"]]),
+            character(1L)
+        )
+        stop(
+            sprintf(
+                "PDC API error (HTTP %d): %s",
+                httr2::resp_status(response),
+                paste(messages, collapse = "; ")
+            ),
+            call. = FALSE
+        )
     }
     body[["data"]]
 }
 
-.toCharacter <- function(value)
+.toCharacter <- function(value) {
     if (is.null(value)) NA_character_ else as.character(value)
+}
 
 # Turn a list of GraphQL records into a data.frame, one column per field.
 .recordsToDF <- function(records, fields) {
-    columns <- lapply(stats::setNames(fields, fields), function(field)
-        vapply(records, function(record) .toCharacter(record[[field]]),
-               character(1L)))
+    columns <- lapply(stats::setNames(fields, fields), function(field) {
+        vapply(
+            records,
+            function(record) .toCharacter(record[[field]]),
+            character(1L)
+        )
+    })
     as.data.frame(columns, stringsAsFactors = FALSE)
 }
 
 .BIOSPECIMEN_FIELDS <- c(
-    "aliquot_submitter_id", "sample_submitter_id", "case_submitter_id",
-    "sample_type", "disease_type", "aliquot_status", "pool"
+    "aliquot_submitter_id",
+    "sample_submitter_id",
+    "case_submitter_id",
+    "sample_type",
+    "disease_type",
+    "aliquot_status",
+    "pool"
 )
 
 # One row per aliquot.
@@ -46,12 +63,17 @@
     tables <- list()
     function(pdc_study_id) {
         if (is.null(tables[[pdc_study_id]])) {
-            query <- sprintf(paste0(
-                '{ biospecimenPerStudy(pdc_study_id: "%s" acceptDUA: true) ',
-                '{ %s } }'
-            ), pdc_study_id, paste(.BIOSPECIMEN_FIELDS, collapse = " "))
+            query <- sprintf(
+                paste0(
+                    '{ biospecimenPerStudy(pdc_study_id: "%s" acceptDUA: true) ',
+                    '{ %s } }'
+                ),
+                pdc_study_id,
+                paste(.BIOSPECIMEN_FIELDS, collapse = " ")
+            )
             tables[[pdc_study_id]] <<- .recordsToDF(
-                .pdcGQL(query)[["biospecimenPerStudy"]], .BIOSPECIMEN_FIELDS
+                .pdcGQL(query)[["biospecimenPerStudy"]],
+                .BIOSPECIMEN_FIELDS
             )
         }
         tables[[pdc_study_id]]
@@ -60,10 +82,14 @@
 
 # Features x aliquot-label numeric matrix for a study.
 .pdcQuantMatrix <- function(pdc_study_id, data_type = "log2_ratio") {
-    query <- sprintf(paste0(
-        '{ quantDataMatrix(pdc_study_id: "%s" data_type: "%s" ',
-        'acceptDUA: true) }'
-    ), pdc_study_id, data_type)
+    query <- sprintf(
+        paste0(
+            '{ quantDataMatrix(pdc_study_id: "%s" data_type: "%s" ',
+            'acceptDUA: true) }'
+        ),
+        pdc_study_id,
+        data_type
+    )
     .parseQuantMatrix(.pdcGQL(query, timeout = 600)[["quantDataMatrix"]])
 }
 
@@ -72,20 +98,27 @@
 # The uuid is not the PDC aliquot_id; only the label is useful for matching.
 # Other rows: feature name followed by values ("NaN" for missing).
 .parseQuantMatrix <- function(rows) {
-    if (length(rows) < 2L)
+    if (length(rows) < 2L) {
         stop("quantDataMatrix returned no data rows.", call. = FALSE)
+    }
     header <- vapply(rows[[1L]], .toCharacter, character(1L))
     body <- rows[-1L]
     values <- suppressWarnings(as.numeric(
         unlist(lapply(body, `[`, -1L), use.names = FALSE)
     ))
     values[is.nan(values)] <- NA_real_
-    if (length(values) != length(body) * (length(header) - 1L))
+    if (length(values) != length(body) * (length(header) - 1L)) {
         stop("quantDataMatrix rows have unequal lengths.", call. = FALSE)
-    matrix(values, nrow = length(body), byrow = TRUE, dimnames = list(
-        vapply(body, function(row) .toCharacter(row[[1L]]), character(1L)),
-        sub("^[^:]+:", "", header[-1L])
-    ))
+    }
+    matrix(
+        values,
+        nrow = length(body),
+        byrow = TRUE,
+        dimnames = list(
+            vapply(body, function(row) .toCharacter(row[[1L]]), character(1L)),
+            sub("^[^:]+:", "", header[-1L])
+        )
+    )
 }
 
 #' List PDC studies and their versions
@@ -103,14 +136,24 @@
 #' @keywords internal
 #' @noRd
 .pdcStudyCatalog <- function(latest_only = FALSE) {
-    versionFields <- c("study_id", "study_submitter_id", "submitter_id_name",
-                       "study_shortname", "study_version", "is_latest_version")
-    query <- sprintf('{ studyCatalog { pdc_study_id versions { %s } } }',
-                     paste(versionFields, collapse = " "))
+    versionFields <- c(
+        "study_id",
+        "study_submitter_id",
+        "submitter_id_name",
+        "study_shortname",
+        "study_version",
+        "is_latest_version"
+    )
+    query <- sprintf(
+        '{ studyCatalog { pdc_study_id versions { %s } } }',
+        paste(versionFields, collapse = " ")
+    )
     studies <- .pdcGQL(query, timeout = 60)[["studyCatalog"]]
-    studyIds <- vapply(studies,
-                       function(study) .toCharacter(study[["pdc_study_id"]]),
-                       character(1L))
+    studyIds <- vapply(
+        studies,
+        function(study) .toCharacter(study[["pdc_study_id"]]),
+        character(1L)
+    )
     versions <- lapply(studies, `[[`, "versions")
     catalog <- data.frame(
         pdc_study_id = rep(studyIds, lengths(versions)),
@@ -120,8 +163,9 @@
     # is_latest_version may arrive as a boolean or a "Yes"/"No"-style string
     catalog$is_latest_version <-
         tolower(catalog$is_latest_version) %in% c("yes", "true", "1", "y")
-    if (latest_only)
+    if (latest_only) {
         catalog <- catalog[catalog$is_latest_version, , drop = FALSE]
+    }
     rownames(catalog) <- NULL
     catalog
 }
