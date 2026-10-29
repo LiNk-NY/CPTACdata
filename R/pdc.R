@@ -65,8 +65,8 @@
         if (is.null(tables[[pdc_study_id]])) {
             query <- sprintf(
                 paste0(
-                    '{ biospecimenPerStudy(pdc_study_id: "%s" acceptDUA: true) ',
-                    '{ %s } }'
+                    '{ biospecimenPerStudy(pdc_study_id: "%s" ',
+                    'acceptDUA: true) { %s } }'
                 ),
                 pdc_study_id,
                 paste(.BIOSPECIMEN_FIELDS, collapse = " ")
