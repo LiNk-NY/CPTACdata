@@ -1,9 +1,11 @@
 Package: CPTACdata
 Title: Append CPTAC Proteomics Data to MultiAssayExperiment Objects
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R: c(
     person("Marcel", "Ramos", , "marcel.ramos@sph.cuny.edu", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0002-3242-0582"))
+           comment = c(ORCID = "0000-0002-3242-0582")),
+    person("Claude", "Haiku 5.5", , "noreply@anthropic.com",
+           role = "ctb"))
 Description: Integrates proteomic data from the Clinical Proteomic
     Tumor Analysis Consortium (CPTAC) into existing MultiAssayExperiment
     objects containing The Cancer Genome Atlas (TCGA) patient barcodes.
