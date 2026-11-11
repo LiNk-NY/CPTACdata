@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+dev/
+README_files/
+README_cache/
