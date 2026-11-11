@@ -25,9 +25,37 @@
 #' @param dry_run If `TRUE`, download only sample metadata and return a
 #'   one-row-per-study summary of what would be added.
 #'
-#' @return The input `mae` with one new experiment per PDC study (named as in
-#'   the `experiment` column of [cptacProjects]), or a summary `data.frame` if
-#'   `dry_run = TRUE`.
+#' @return If `dry_run = FALSE`, the input `mae` with one new experiment per
+#'   PDC study, named as in the `experiment` column of [cptacProjects]. Each
+#'   experiment is a `SummarizedExperiment` with:
+#'   - One assay, named after the `data_type` of the study (e.g.
+#'     `"log2_ratio"`), holding the PDC quantification matrix for the matched
+#'     samples. Rows are genes or protein sites, and missing values are `NA`.
+#'   - Columns named by TCGA sample barcode (e.g. `TCGA-24-1555-01A`), one per
+#'     matched sample. Technical replicates are reduced to the first one.
+#'   - `colData` with `case_submitter_id` (TCGA patient barcode),
+#'     `aliquot_submitter_id`, `sample_type`, and `pdc_column` (the column
+#'     label in the PDC matrix).
+#'   - `metadata` with `pdc_study_id`, `pdc_name`, `data_type` and `source`
+#'     (the PDC GraphQL URL).
+#'
+#'   The new `sampleMap` links every new column to its TCGA patient. Studies
+#'   that are skipped, because they have no matrix, no matching patients or
+#'   are already in `mae`, add no experiment and give a warning or message.
+#'
+#'   If `dry_run = TRUE`, a `data.frame` with one row per study in
+#'   [cptacProjects] for the requested project and fraction, and these
+#'   columns:
+#'   - `experiment`: experiment name the study would be added as.
+#'   - `pdc_study_id`: PDC study ID.
+#'   - `quant_available`: `TRUE` if the PDC has a quantification matrix for
+#'     the study.
+#'   - `mae_patients`: number of patients in `colData(mae)`. Same value for
+#'     every row.
+#'   - `pdc_patients`: number of distinct TCGA patients in the PDC study that
+#'     pass the specimen filters. `NA` if there is no matrix.
+#'   - `matched_patients`: number of those patients that are also in
+#'     `colData(mae)`. `NA` if there is no matrix.
 #'
 #' @seealso [cptacProjects]
 #'

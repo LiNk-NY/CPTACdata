@@ -26,9 +26,41 @@ type to add several.}
 one-row-per-study summary of what would be added.}
 }
 \value{
-The input \code{mae} with one new experiment per PDC study (named as in
-the \code{experiment} column of \link{cptacProjects}), or a summary \code{data.frame} if
-\code{dry_run = TRUE}.
+If \code{dry_run = FALSE}, the input \code{mae} with one new experiment per
+PDC study, named as in the \code{experiment} column of \link{cptacProjects}. Each
+experiment is a \code{SummarizedExperiment} with:
+\itemize{
+\item One assay, named after the \code{data_type} of the study (e.g.
+\code{"log2_ratio"}), holding the PDC quantification matrix for the matched
+samples. Rows are genes or protein sites, and missing values are \code{NA}.
+\item Columns named by TCGA sample barcode (e.g. \verb{TCGA-24-1555-01A}), one per
+matched sample. Technical replicates are reduced to the first one.
+\item \code{colData} with \code{case_submitter_id} (TCGA patient barcode),
+\code{aliquot_submitter_id}, \code{sample_type}, and \code{pdc_column} (the column
+label in the PDC matrix).
+\item \code{metadata} with \code{pdc_study_id}, \code{pdc_name}, \code{data_type} and \code{source}
+(the PDC GraphQL URL).
+}
+
+The new \code{sampleMap} links every new column to its TCGA patient. Studies
+that are skipped, because they have no matrix, no matching patients or
+are already in \code{mae}, add no experiment and give a warning or message.
+
+If \code{dry_run = TRUE}, a \code{data.frame} with one row per study in
+\link{cptacProjects} for the requested project and fraction, and these
+columns:
+\itemize{
+\item \code{experiment}: experiment name the study would be added as.
+\item \code{pdc_study_id}: PDC study ID.
+\item \code{quant_available}: \code{TRUE} if the PDC has a quantification matrix for
+the study.
+\item \code{mae_patients}: number of patients in \code{colData(mae)}. Same value for
+every row.
+\item \code{pdc_patients}: number of distinct TCGA patients in the PDC study that
+pass the specimen filters. \code{NA} if there is no matrix.
+\item \code{matched_patients}: number of those patients that are also in
+\code{colData(mae)}. \code{NA} if there is no matrix.
+}
 }
 \description{
 Takes a \code{MultiAssayExperiment} from \code{curatedTCGAData}, finds the CPTAC
