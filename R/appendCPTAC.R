@@ -1,38 +1,35 @@
 #' Append CPTAC proteomics from the PDC to a TCGA MultiAssayExperiment
 #'
-#' Takes a \code{MultiAssayExperiment} from \code{curatedTCGAData}, finds the
-#' CPTAC studies in the Proteomic Data Commons (PDC) that were run on the same
-#' TCGA tumors, and adds them as new experiments with a correct
-#' \code{sampleMap}.
+#' Takes a `MultiAssayExperiment` from `curatedTCGAData`, finds the CPTAC
+#' studies in the Proteomic Data Commons (PDC) that were run on the same TCGA
+#' tumors, and adds them as new experiments with a correct `sampleMap`.
 #'
-#' Only patients already in \code{colData(mae)} are added. Specimens are kept
-#' if they carry a TCGA barcode, are "Qualified" and not pooled. Each new
-#' experiment has one column per TCGA sample (e.g. \code{TCGA-24-1555-01A});
+#' Only patients already in `colData(mae)` are added. Specimens are kept if
+#' they carry a TCGA barcode, are "Qualified" and not pooled. Each new
+#' experiment has one column per TCGA sample (e.g. `TCGA-24-1555-01A`);
 #' technical replicates are reduced to the first one. Missing values are
-#' \code{NA}. The quantification is
-#' the PDC Common Data Analysis Pipeline value given by the \code{data_type}
-#' column of \code{\link{cptacProjects}} (log2 ratios to a common
+#' `NA`. The quantification is the PDC Common Data Analysis Pipeline value
+#' given by the `data_type` column of [cptacProjects] (log2 ratios to a common
 #' reference).
 #'
-#' Biospecimen tables are cached for the R session, so a \code{dry_run}
-#' followed by a real run downloads them only once.
+#' Biospecimen tables are cached for the R session, so a `dry_run` followed by
+#' a real run downloads them only once.
 #'
-#' @param mae A \code{MultiAssayExperiment} for a single TCGA project, such
-#'   as one from \code{curatedTCGAData}.
-#' @param project TCGA project, e.g. \code{"OV"} or \code{"TCGA-OV"}. If
-#'   \code{NULL}, it is read from the \code{admin.disease_code} column of
-#'   \code{colData(mae)}.
-#' @param fraction The assay type to add: one of \code{"Proteome"}
-#'   (default), \code{"Phosphoproteome"} or \code{"Glycoproteome"}. Call
-#'   \code{appendCPTAC} once per type to add several.
-#' @param dry_run If \code{TRUE}, download only sample metadata and return a
+#' @param mae A `MultiAssayExperiment` for a single TCGA project, such as one
+#'   from `curatedTCGAData`.
+#' @param project TCGA project, e.g. `"OV"` or `"TCGA-OV"`. If `NULL`, it is
+#'   read from the `admin.disease_code` column of `colData(mae)`.
+#' @param fraction The assay type to add: one of `"Proteome"` (default),
+#'   `"Phosphoproteome"` or `"Glycoproteome"`. Call `appendCPTAC` once per
+#'   type to add several.
+#' @param dry_run If `TRUE`, download only sample metadata and return a
 #'   one-row-per-study summary of what would be added.
 #'
-#' @return The input \code{mae} with one new experiment per PDC study (named
-#'   as in the \code{experiment} column of \code{\link{cptacProjects}}), or a
-#'   summary \code{data.frame} if \code{dry_run = TRUE}.
+#' @return The input `mae` with one new experiment per PDC study (named as in
+#'   the `experiment` column of [cptacProjects]), or a summary `data.frame` if
+#'   `dry_run = TRUE`.
 #'
-#' @seealso \code{\link{cptacProjects}}
+#' @seealso [cptacProjects]
 #'
 #' @examples
 #' \dontrun{

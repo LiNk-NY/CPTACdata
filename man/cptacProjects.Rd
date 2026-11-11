@@ -7,27 +7,26 @@
 \format{
 A \code{data.frame} with one row per TCGA project and PDC study
 (8 rows) and 8 columns:
-\describe{
-\item{tcga_project}{TCGA project ID.}
-\item{pdc_study_id}{PDC study ID.}
-\item{pdc_name}{PDC study name.}
-\item{experiment}{Name given to the experiment added to the
-\code{MultiAssayExperiment}.}
-\item{analytical_fraction}{Proteome, Phosphoproteome or
-Glycoproteome.}
-\item{data_type}{\code{quantDataMatrix} data type that is downloaded;
-\code{NA} if the PDC has no matrix for the study.}
-\item{pdc_disease_type}{PDC disease label used to split studies that
-span several TCGA projects; \code{NA} if not needed.}
-\item{verified}{\code{TRUE} if every qualified TCGA patient in the
-study was found in the GDC project when the data were built.}
+\itemize{
+\item \code{tcga_project}: TCGA project ID.
+\item \code{pdc_study_id}: PDC study ID.
+\item \code{pdc_name}: PDC study name.
+\item \code{experiment}: Name given to the experiment added to the
+\code{MultiAssayExperiment}.
+\item \code{analytical_fraction}: Proteome, Phosphoproteome or Glycoproteome.
+\item \code{data_type}: \code{quantDataMatrix} data type that is downloaded; \code{NA} if
+the PDC has no matrix for the study.
+\item \code{pdc_disease_type}: PDC disease label used to split studies that span
+several TCGA projects; \code{NA} if not needed.
+\item \code{verified}: \code{TRUE} if every qualified TCGA patient in the study was
+found in the GDC project when the data were built.
 }
 }
 \source{
 Built from the PDC GraphQL API (\url{https://pdc.cancer.gov/graphql})
 and the GDC API (\url{https://api.gdc.cancer.gov}) by
-\code{data-raw/cptacProjects.R} in the package sources. Experiment names
-and data types are curated in that script.
+\code{data-raw/cptacProjects.R} in the package sources. Experiment names and
+data types are curated in that script.
 }
 \usage{
 cptacProjects
@@ -36,7 +35,7 @@ cptacProjects
 A crosswalk between TCGA projects (e.g. \code{"TCGA-BRCA"}) and the
 Proteomic Data Commons (PDC) studies holding CPTAC data generated on the
 \emph{same TCGA tumors} (the PDC "CPTAC-TCGA" project). It is used by
-\code{\link{appendCPTAC}} to select studies.
+\code{\link[=appendCPTAC]{appendCPTAC()}} to select studies.
 }
 \details{
 Cancer types profiled by CPTAC-3 (e.g. LUAD, ccRCC) and the "Prospective"
@@ -51,7 +50,7 @@ ovarian proteomes share 33 patients and are separate experiments.
 Some TCGA-derived studies (the colon proteome, PDC000111, and the ovarian
 glycoproteome, PDC000112) have biospecimen records in the PDC but no
 quantification matrix available through its API. They are listed with
-\code{data_type = NA} and are skipped by \code{\link{appendCPTAC}}.
+\code{data_type = NA} and are skipped by \code{\link[=appendCPTAC]{appendCPTAC()}}.
 }
 \examples{
 cptacProjects

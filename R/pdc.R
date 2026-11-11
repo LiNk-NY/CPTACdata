@@ -123,16 +123,16 @@
 
 #' List PDC studies and their versions
 #'
-#' Queries \code{studyCatalog} and flattens the result to one row per study
-#' version. A PDC study ID (e.g. \code{"PDC000127"}) is stable across versions
-#' and resolves to the latest version in other API calls; a version's
-#' \code{study_id} (a UUID) pins that version.
+#' Queries `studyCatalog` and flattens the result to one row per study version.
+#' A PDC study ID (e.g. `"PDC000127"`) is stable across versions and resolves
+#' to the latest version in other API calls; a version's `study_id` (a UUID)
+#' pins that version.
 #'
-#' @param latest_only Logical. If \code{TRUE}, keep only the latest version of
-#'   each study.
-#' @return A \code{data.frame} with columns \code{pdc_study_id},
-#'   \code{study_id}, \code{study_submitter_id}, \code{submitter_id_name},
-#'   \code{study_shortname}, \code{study_version}, \code{is_latest_version}.
+#' @param latest_only Logical. If `TRUE`, keep only the latest version of each
+#'   study.
+#' @return A `data.frame` with columns `pdc_study_id`, `study_id`,
+#'   `study_submitter_id`, `submitter_id_name`, `study_shortname`,
+#'   `study_version`, `is_latest_version`.
 #' @keywords internal
 #' @noRd
 .pdcStudyCatalog <- function(latest_only = FALSE) {

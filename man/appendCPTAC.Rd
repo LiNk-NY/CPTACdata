@@ -12,43 +12,40 @@ appendCPTAC(
 )
 }
 \arguments{
-\item{mae}{A \code{MultiAssayExperiment} for a single TCGA project, such
-as one from \code{curatedTCGAData}.}
+\item{mae}{A \code{MultiAssayExperiment} for a single TCGA project, such as one
+from \code{curatedTCGAData}.}
 
-\item{project}{TCGA project, e.g. \code{"OV"} or \code{"TCGA-OV"}. If
-\code{NULL}, it is read from the \code{admin.disease_code} column of
-\code{colData(mae)}.}
+\item{project}{TCGA project, e.g. \code{"OV"} or \code{"TCGA-OV"}. If \code{NULL}, it is
+read from the \code{admin.disease_code} column of \code{colData(mae)}.}
 
-\item{fraction}{The assay type to add: one of \code{"Proteome"}
-(default), \code{"Phosphoproteome"} or \code{"Glycoproteome"}. Call
-\code{appendCPTAC} once per type to add several.}
+\item{fraction}{The assay type to add: one of \code{"Proteome"} (default),
+\code{"Phosphoproteome"} or \code{"Glycoproteome"}. Call \code{appendCPTAC} once per
+type to add several.}
 
 \item{dry_run}{If \code{TRUE}, download only sample metadata and return a
 one-row-per-study summary of what would be added.}
 }
 \value{
-The input \code{mae} with one new experiment per PDC study (named
-as in the \code{experiment} column of \code{\link{cptacProjects}}), or a
-summary \code{data.frame} if \code{dry_run = TRUE}.
+The input \code{mae} with one new experiment per PDC study (named as in
+the \code{experiment} column of \link{cptacProjects}), or a summary \code{data.frame} if
+\code{dry_run = TRUE}.
 }
 \description{
-Takes a \code{MultiAssayExperiment} from \code{curatedTCGAData}, finds the
-CPTAC studies in the Proteomic Data Commons (PDC) that were run on the same
-TCGA tumors, and adds them as new experiments with a correct
-\code{sampleMap}.
+Takes a \code{MultiAssayExperiment} from \code{curatedTCGAData}, finds the CPTAC
+studies in the Proteomic Data Commons (PDC) that were run on the same TCGA
+tumors, and adds them as new experiments with a correct \code{sampleMap}.
 }
 \details{
-Only patients already in \code{colData(mae)} are added. Specimens are kept
-if they carry a TCGA barcode, are "Qualified" and not pooled. Each new
-experiment has one column per TCGA sample (e.g. \code{TCGA-24-1555-01A});
+Only patients already in \code{colData(mae)} are added. Specimens are kept if
+they carry a TCGA barcode, are "Qualified" and not pooled. Each new
+experiment has one column per TCGA sample (e.g. \verb{TCGA-24-1555-01A});
 technical replicates are reduced to the first one. Missing values are
-\code{NA}. The quantification is
-the PDC Common Data Analysis Pipeline value given by the \code{data_type}
-column of \code{\link{cptacProjects}} (log2 ratios to a common
+\code{NA}. The quantification is the PDC Common Data Analysis Pipeline value
+given by the \code{data_type} column of \link{cptacProjects} (log2 ratios to a common
 reference).
 
-Biospecimen tables are cached for the R session, so a \code{dry_run}
-followed by a real run downloads them only once.
+Biospecimen tables are cached for the R session, so a \code{dry_run} followed by
+a real run downloads them only once.
 }
 \examples{
 \dontrun{
@@ -63,5 +60,5 @@ mae <- appendCPTAC(mae, fraction = "Phosphoproteome")
 }
 }
 \seealso{
-\code{\link{cptacProjects}}
+\link{cptacProjects}
 }
