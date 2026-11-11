@@ -84,9 +84,10 @@ Biospecimen tables are cached for the R session, so a \code{dry_run} followed by
 a real run downloads them only once.
 }
 \examples{
-\donttest{
-## Needs network access to the PDC, and asks you to accept its Data Use
-## Agreement. A small object stands in for a curatedTCGAData object here.
+## The example queries the PDC API, so it runs only after you have accepted
+## the PDC Data Use Agreement with options(CPTACdata.acceptDUA = TRUE).
+## A small object stands in for a curatedTCGAData object here.
+if (isTRUE(getOption("CPTACdata.acceptDUA"))) {
 patients <- c("TCGA-BH-A18U", "TCGA-BH-A0C0", "TCGA-A8-A08Z")
 mae <- MultiAssayExperiment::MultiAssayExperiment(
     experiments = list(
