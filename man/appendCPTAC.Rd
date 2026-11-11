@@ -38,8 +38,12 @@ matched sample. Technical replicates are reduced to the first one.
 \item \code{colData} with \code{case_submitter_id} (TCGA patient barcode),
 \code{aliquot_submitter_id}, \code{sample_type}, and \code{pdc_column} (the column
 label in the PDC matrix).
-\item \code{metadata} with \code{pdc_study_id}, \code{pdc_name}, \code{data_type} and \code{source}
-(the PDC GraphQL URL).
+\item \code{metadata} with \code{pdc_study_id}, \code{pdc_name}, \code{data_type}, \code{source} (the
+PDC GraphQL URL), \code{pdc_study_version} and \code{pdc_study_uuid} (the PDC
+version of the study and its identifier, which pins that version),
+\code{retrieved} (the time the matrix was downloaded) and
+\code{CPTACdata_version} (the package version that downloaded it). Read them
+with \code{S4Vectors::metadata(mae[["CPTAC_Proteome"]])}.
 }
 
 The new \code{sampleMap} links every new column to its TCGA patient. Studies

@@ -170,3 +170,30 @@
     rownames(catalog) <- NULL
     catalog
 }
+
+# Version of a study that the PDC resolves its pdc_study_id to. The catalog
+# is fetched once per session, as the biospecimen tables are.
+.pdcStudyVersion <- local({
+    catalog <- NULL
+    function(pdc_study_id) {
+        if (is.null(catalog)) {
+            catalog <<- .pdcStudyCatalog(latest_only = TRUE)
+        }
+        match <- catalog[catalog[["pdc_study_id"]] == pdc_study_id, ,
+            drop = FALSE]
+        if (nrow(match) != 1L) {
+            stop(
+                sprintf(
+                    "PDC catalog has %d latest versions of '%s'.",
+                    nrow(match),
+                    pdc_study_id
+                ),
+                call. = FALSE
+            )
+        }
+        list(
+            pdc_study_version = match[["study_version"]],
+            pdc_study_uuid = match[["study_id"]]
+        )
+    }
+})

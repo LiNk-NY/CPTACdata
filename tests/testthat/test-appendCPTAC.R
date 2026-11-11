@@ -59,6 +59,10 @@ test_that("appendCPTAC() adds a proteome with a valid sampleMap", {
     expect_identical(gqlCalls[["bio_PDC000173"]], 1L)
 
     se <- res[["CPTAC_Proteome"]]
+    meta <- S4Vectors::metadata(se)
+    expect_identical(meta[["pdc_study_version"]], "2")
+    expect_identical(meta[["pdc_study_uuid"]], "uuid-PDC000173")
+    expect_s3_class(meta[["retrieved"]], "POSIXct")
     expect_setequal(colnames(se), paste0(brcaPatients, "-01A"))
     expect_identical(SummarizedExperiment::assayNames(se), "log2_ratio")
     # replicates ".1"/".2" collapse to the first

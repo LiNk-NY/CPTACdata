@@ -36,8 +36,12 @@
 #'   - `colData` with `case_submitter_id` (TCGA patient barcode),
 #'     `aliquot_submitter_id`, `sample_type`, and `pdc_column` (the column
 #'     label in the PDC matrix).
-#'   - `metadata` with `pdc_study_id`, `pdc_name`, `data_type` and `source`
-#'     (the PDC GraphQL URL).
+#'   - `metadata` with `pdc_study_id`, `pdc_name`, `data_type`, `source` (the
+#'     PDC GraphQL URL), `pdc_study_version` and `pdc_study_uuid` (the PDC
+#'     version of the study and its identifier, which pins that version),
+#'     `retrieved` (the time the matrix was downloaded) and
+#'     `CPTACdata_version` (the package version that downloaded it). Read them
+#'     with `S4Vectors::metadata(mae[["CPTAC_Proteome"]])`.
 #'
 #'   The new `sampleMap` links every new column to its TCGA patient. Studies
 #'   that are skipped, because they have no matrix, no matching patients or
@@ -263,6 +267,7 @@ appendCPTAC <- function(
 }
 
 .buildCptacSE <- function(row, specimens) {
+    studyVersion <- .pdcStudyVersion(row[["pdc_study_id"]])
     quantMatrix <- .pdcQuantMatrix(row[["pdc_study_id"]], row[["data_type"]])
     # PDC column order is arbitrary; sorting keeps replicate ".1" over ".2"
     quantMatrix <- quantMatrix[, order(colnames(quantMatrix)), drop = FALSE]
@@ -299,11 +304,20 @@ appendCPTAC <- function(
             sampleData,
             row.names = colnames(quantMatrix)
         ),
-        metadata = list(
-            pdc_study_id = row[["pdc_study_id"]],
-            pdc_name = row[["pdc_name"]],
-            data_type = row[["data_type"]],
-            source = .PDC_URL
+        metadata = c(
+            list(
+                pdc_study_id = row[["pdc_study_id"]],
+                pdc_name = row[["pdc_name"]],
+                data_type = row[["data_type"]],
+                source = .PDC_URL
+            ),
+            studyVersion,
+            list(
+                retrieved = Sys.time(),
+                CPTACdata_version = as.character(
+                    utils::packageVersion("CPTACdata")
+                )
+            )
         )
     )
 }

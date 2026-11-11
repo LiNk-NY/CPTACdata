@@ -15,10 +15,28 @@ fakeGQL <- function(query, ...) {
     readRDS(f)
 }
 
+# Stand-in for .pdcStudyCatalog(): one latest version per study, with
+# made-up identifiers.
+fakeCatalog <- function(latest_only = FALSE) {
+    ids <- unique(CPTACdata::cptacProjects[["pdc_study_id"]])
+    data.frame(
+        pdc_study_id = ids,
+        study_id = paste0("uuid-", ids),
+        study_version = "2",
+        is_latest_version = TRUE,
+        stringsAsFactors = FALSE
+    )
+}
+
 localPDC <- function(env = parent.frame()) {
     assign("tables", list(), envir = environment(.pdcBiospecimenTable))
+    assign("catalog", NULL, envir = environment(.pdcStudyVersion))
     rm(list = ls(gqlCalls), envir = gqlCalls)
-    local_mocked_bindings(.pdcGQL = fakeGQL, .env = env)
+    local_mocked_bindings(
+        .pdcGQL = fakeGQL,
+        .pdcStudyCatalog = fakeCatalog,
+        .env = env
+    )
 }
 
 # Small MAE: `patients` plus one patient absent from the PDC.

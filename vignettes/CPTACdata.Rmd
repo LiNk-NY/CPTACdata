@@ -143,6 +143,13 @@ reference that the PDC used for the whole study. A value of 0 means the same
 abundance as the reference, 1 means twice the reference, and -1 means half.
 The reference is set per study, so compare values across experiments with care.
 
+Each experiment also records where its data came from, in its metadata. This
+includes the PDC study version and the time the matrix was downloaded:
+
+```{r experiment-metadata}
+S4Vectors::metadata(mae[["CPTAC_PNNL_Proteome"]])
+```
+
 Rows are genes in the proteome. In the phosphoproteome they are RefSeq protein
 and site identifiers, such as `NP_000005.2:s710`. Columns are named by TCGA
 sample barcode. Missing values are stored as `NA`.
