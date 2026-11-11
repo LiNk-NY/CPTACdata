@@ -21,7 +21,8 @@ URL: https://github.com/LiNk-NY/CPTACdata
 BugReports: https://github.com/LiNk-NY/CPTACdata/issues
 biocViews: Software, Proteomics, BiomedicalInformatics
 Depends: R (>= 4.1.0)
-Imports: 
+Imports:
+    BiocBaseUtils,
     httr2,
     methods,
     MultiAssayExperiment,

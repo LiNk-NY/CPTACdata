@@ -61,6 +61,15 @@ Start with any `curatedTCGAData` object for one TCGA project. Only patients
 in its `colData` can be matched, so include enough assays to cover the
 patients of interest.
 
+The CPTAC data are provided under the PDC Data Use Agreement at
+<https://proteomic.datacommons.cancer.gov/pdc/data-use-guidelines>. Read it
+before running the next chunk, which accepts it on your behalf for this
+document:
+
+```{r accept-pdc-dua}
+options(CPTACdata.acceptDUA = TRUE)
+```
+
 ```{r fetch-tcga-mae, message = FALSE}
 mae <- curatedTCGAData("OV", "RPPAArray", version = "2.1.1", dry.run = FALSE)
 ```

@@ -5,6 +5,7 @@
 .PDC_URL <- "https://pdc.cancer.gov/graphql"
 
 .pdcGQL <- function(query, timeout = 120) {
+    .checkDataUse()
     response <- httr2::request(.PDC_URL) |>
         httr2::req_body_json(list(query = query)) |>
         httr2::req_timeout(timeout) |>
