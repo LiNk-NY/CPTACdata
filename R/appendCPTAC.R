@@ -39,8 +39,10 @@
 #' mae <- curatedTCGAData::curatedTCGAData(
 #'     "OV", "RNASeq2GeneNorm", version = "2.1.1", dry.run = FALSE
 #' )
-#' appendCPTAC(mae, dry_run = TRUE)
-#' mae <- appendCPTAC(mae)
+#' appendCPTAC(mae, fraction = "Proteome", dry_run = TRUE)
+#' mae <- appendCPTAC(mae, fraction = "Proteome")
+#'
+#' appendCPTAC(mae, fraction = "Phosphoproteome", dry_run = TRUE)
 #' mae <- appendCPTAC(mae, fraction = "Phosphoproteome")
 #' }
 #' @export
