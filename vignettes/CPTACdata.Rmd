@@ -69,7 +69,7 @@ mae[["CPTAC_PNNL_Proteome"]]
 The JHU and PNNL ovarian proteomes are separate experiments that share some
 patients:
 
-```{r}
+```{r, warning = FALSE}
 upsetSamples(mae)
 ```
 
