@@ -66,13 +66,9 @@ appendCPTAC <- function(
     }
 
     studies <- CPTACdata::cptacProjects
-    studies <- studies[
-        studies[["tcga_project"]] %in%
-            project &
-            studies[["analytical_fraction"]] %in% fraction,
-        ,
-        drop = FALSE
-    ]
+    proj_and_frac <- studies[["tcga_project"]] %in% project &
+        studies[["analytical_fraction"]] %in% fraction
+    studies <- studies[proj_and_frac, , drop = FALSE]
     if (nrow(studies) == 0L) {
         stop(
             sprintf("No CPTAC %s data for %s. ", fraction, project),
@@ -82,10 +78,16 @@ appendCPTAC <- function(
     }
 
     patients <- rownames(MultiAssayExperiment::colData(mae))
+    # One single-row table per experiment, named by experiment so that every
+    # later step looks studies up by name rather than by position
+    studyRows <- split(
+        studies,
+        factor(studies[["experiment"]], levels = studies[["experiment"]])
+    )
     # NULL for studies without a quantification matrix: nothing to fetch
-    specimens <- lapply(seq_len(nrow(studies)), function(i) {
-        if (!is.na(studies[["data_type"]][i])) {
-            .tcgaSpecimens(studies[i, , drop = FALSE])
+    specimens <- lapply(studyRows, function(row) {
+        if (!is.na(row[["data_type"]])) {
+            .tcgaSpecimens(row)
         }
     })
     matched <- lapply(specimens, function(studySpecimens) {
@@ -109,15 +111,14 @@ appendCPTAC <- function(
             pdc_study_id = studies[["pdc_study_id"]],
             quant_available = !is.na(studies[["data_type"]]),
             mae_patients = length(patients),
-            pdc_patients = vapply(specimens, nPatients, integer(1L)),
-            matched_patients = vapply(matched, nPatients, integer(1L)),
+            pdc_patients = unname(vapply(specimens, nPatients, integer(1L))),
+            matched_patients = unname(vapply(matched, nPatients, integer(1L))),
             stringsAsFactors = FALSE
         ))
     }
 
-    for (i in seq_len(nrow(studies))) {
-        row <- studies[i, , drop = FALSE]
-        experimentName <- row[["experiment"]]
+    for (experimentName in names(studyRows)) {
+        row <- studyRows[[experimentName]]
         if (is.na(row[["data_type"]])) {
             warning(
                 sprintf(
@@ -130,7 +131,7 @@ appendCPTAC <- function(
             )
             next
         }
-        if (nrow(matched[[i]]) == 0L) {
+        if (nrow(matched[[experimentName]]) == 0L) {
             warning(
                 sprintf(
                     "No patients in %s match the MAE; skipped.",
