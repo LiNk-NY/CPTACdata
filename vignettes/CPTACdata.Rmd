@@ -12,6 +12,8 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
+# CPTACdata
+
 # Overview
 
 The Clinical Proteomic Tumor Analysis Consortium (CPTAC) profiled the
@@ -23,6 +25,15 @@ from the Proteomic Data Commons (PDC) and appends them to a
 library(CPTACdata)
 library(curatedTCGAData)
 library(MultiAssayExperiment)
+```
+
+# Installation
+
+```{r install, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("CPTACdata")
 ```
 
 # Which TCGA projects have CPTAC data?
