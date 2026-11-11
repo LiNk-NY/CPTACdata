@@ -263,15 +263,17 @@ gdc <- lapply(
     stats::setNames(nm = unique(cptacProjects[["tcga_project"]])),
     gdcCaseIds
 )
-cptacProjects[["verified"]] <- vapply(
-    seq_len(nrow(cptacProjects)),
-    function(i) {
-        row <- cptacProjects[i, ]
+verifiedByExperiment <- vapply(
+    split(cptacProjects, cptacProjects[["experiment"]]),
+    function(row) {
         cases <- unique(.tcgaSpecimens(row)[["case_submitter_id"]])
         length(cases) > 0L &&
             all(cases %in% gdc[[row[["tcga_project"]]]])
     },
     logical(1L)
+)
+cptacProjects[["verified"]] <- unname(
+    verifiedByExperiment[cptacProjects[["experiment"]]]
 )
 
 failures <- checkCrosswalk(cptacProjects, curated)
