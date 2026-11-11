@@ -48,8 +48,9 @@ downloading only sample metadata:
 appendCPTAC(mae, dry_run = TRUE)
 ```
 
-Then add the data. The project is detected from `colData`, and the proteome
-is added by default. Call `appendCPTAC()` again for other assay types:
+Then add the data. The project is detected from `colData`, and the
+**proteome is added by default**. Call `appendCPTAC()` again for other assay
+types:
 
 ```{r}
 mae <- appendCPTAC(mae)
