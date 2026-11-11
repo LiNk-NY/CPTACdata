@@ -21,6 +21,19 @@ proteomes of several hundred TCGA tumors. `CPTACdata` downloads those data
 from the Proteomic Data Commons (PDC) and appends them to a
 `MultiAssayExperiment` from `curatedTCGAData`.
 
+TCGA measured the genome and transcriptome of these tumors, and only a small
+panel of proteins with antibody arrays. Mass-spectrometry proteomics measures
+the protein layer directly, and protein levels often differ from mRNA levels,
+so matched protein data lets you compare the layers in the same patients.
+Adding the CPTAC data to a `MultiAssayExperiment` you already use keeps the
+samples aligned across all assays.
+
+`cBioPortalData` also returns cancer study data as `MultiAssayExperiment`
+objects, and it includes TCGA reverse-phase protein array (RPPA) data.
+`CPTACdata` reads the mass-spectrometry quantifications directly from the PDC
+for the CPTAC-TCGA cohorts. Check whether the cBioPortal studies you need
+contain the same CPTAC data before choosing between the two.
+
 ```{r load-packages, message = FALSE}
 library(CPTACdata)
 library(curatedTCGAData)
