@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
@@ -19,7 +19,7 @@ proteomes of several hundred TCGA tumors. `CPTACdata` downloads those data
 from the Proteomic Data Commons (PDC) and appends them to a
 `MultiAssayExperiment` from `curatedTCGAData`.
 
-```{r, message = FALSE}
+```{r load-packages, message = FALSE}
 library(CPTACdata)
 library(curatedTCGAData)
 library(MultiAssayExperiment)
@@ -27,7 +27,7 @@ library(MultiAssayExperiment)
 
 # Which TCGA projects have CPTAC data?
 
-```{r}
+```{r list-cptac-projects}
 cptacProjects
 ```
 
@@ -37,14 +37,14 @@ Start with any `curatedTCGAData` object for one TCGA project. Only patients
 in its `colData` can be matched, so include enough assays to cover the
 patients of interest.
 
-```{r, message = FALSE}
+```{r fetch-tcga-mae, message = FALSE}
 mae <- curatedTCGAData("OV", "RPPAArray", version = "2.1.1", dry.run = FALSE)
 ```
 
 A dry run reports how many patients each PDC study shares with the object,
 downloading only sample metadata:
 
-```{r}
+```{r dry-run}
 appendCPTAC(mae, dry_run = TRUE)
 ```
 
@@ -52,7 +52,7 @@ Then add the data. The project is detected from `colData`, and the
 **proteome is added by default**. Call `appendCPTAC()` again for other assay
 types:
 
-```{r}
+```{r append-experiments}
 mae <- appendCPTAC(mae)
 mae <- appendCPTAC(mae, fraction = "Phosphoproteome")
 mae
@@ -61,7 +61,7 @@ mae
 The new experiments have one column per TCGA sample, and the `sampleMap`
 links them to patients:
 
-```{r}
+```{r sample-map}
 tail(sampleMap(mae))
 mae[["CPTAC_PNNL_Proteome"]]
 ```
@@ -69,12 +69,12 @@ mae[["CPTAC_PNNL_Proteome"]]
 The JHU and PNNL ovarian proteomes are separate experiments that share some
 patients:
 
-```{r, warning = FALSE}
+```{r upset-samples, warning = FALSE}
 upsetSamples(mae)
 ```
 
 # Session info
 
-```{r}
+```{r session-info}
 sessionInfo()
 ```
