@@ -146,9 +146,9 @@ appendCPTAC <- function(
             "Adding %s from %s (%d patients)...",
             experimentName,
             row[["pdc_study_id"]],
-            nPatients(matched[[i]])
+            nPatients(matched[[experimentName]])
         ))
-        experiment <- .buildCptacSE(row, matched[[i]])
+        experiment <- .buildCptacSE(row, matched[[experimentName]])
         sampleMap <- S4Vectors::DataFrame(
             assay = factor(rep(experimentName, ncol(experiment))),
             primary = TCGAutils::TCGAbarcode(colnames(experiment)),
