@@ -69,8 +69,14 @@ mae[["CPTAC_PNNL_Proteome"]]
 The JHU and PNNL ovarian proteomes are separate experiments that share some
 patients:
 
-```{r upset-samples, warning = FALSE}
+```{r upset-samples, eval = FALSE}
 upsetSamples(mae)
+```
+
+```{r upset-samples-figure, echo = FALSE}
+img_path <-
+    if (knitr::opts_knit$get("child")) "man/figures/" else "../man/figures/"
+knitr::include_graphics(paste0(img_path, "CPTACdata_upset.png"))
 ```
 
 # Session info

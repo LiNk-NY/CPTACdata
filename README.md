@@ -130,7 +130,7 @@ some patients:
 upsetSamples(mae)
 ```
 
-<img src="/home/mramos/gh/CPTACdata/README_files/figure-gfm/unnamed-chunk-14-1.png" alt="" width="100%" />
+<img src="man/figures/CPTACdata_upset.png" alt="" width="100%" />
 
 # Session info
 
@@ -169,52 +169,46 @@ sessionInfo()
 #> [13] CPTACdata_0.99.4           
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] tidyselect_1.2.1          farver_2.1.2             
-#>  [3] dplyr_1.2.1               blob_1.3.0               
-#>  [5] S7_0.2.2                  filelock_1.0.3           
-#>  [7] Biostrings_2.81.9         bitops_1.1-0             
-#>  [9] fastmap_1.2.0             RCurl_1.98-1.20          
-#> [11] BiocFileCache_3.3.2       GenomicAlignments_1.49.2 
-#> [13] XML_3.99-0.25             digest_0.6.39            
-#> [15] lifecycle_1.0.5           KEGGREST_1.53.6          
-#> [17] RSQLite_3.53.3            magrittr_2.0.5           
-#> [19] compiler_4.6.1            rlang_1.3.0              
-#> [21] tools_4.6.1               yaml_2.3.12              
-#> [23] rtracklayer_1.73.0        knitr_1.52               
-#> [25] labeling_0.4.3            S4Arrays_1.13.2          
-#> [27] bit_4.6.0                 curl_8.1.0               
-#> [29] DelayedArray_0.39.8       plyr_1.8.9               
-#> [31] RColorBrewer_1.1-3        xml2_1.6.0               
-#> [33] abind_1.4-8               BiocParallel_1.47.0      
-#> [35] withr_3.0.3               grid_4.6.1               
-#> [37] ExperimentHub_3.3.2       ggplot2_4.0.3            
-#> [39] scales_1.4.0              dichromat_2.0-1          
-#> [41] cli_3.6.6                 UpSetR_1.4.1             
-#> [43] rmarkdown_2.32            crayon_1.5.3             
-#> [45] otel_0.3.0                rstudioapi_0.19.0        
-#> [47] httr_1.4.9                tzdb_0.5.0               
-#> [49] rjson_0.2.23              BiocBaseUtils_1.15.1     
-#> [51] GenomicDataCommons_1.37.0 DBI_1.3.0                
-#> [53] cachem_1.1.0              stringr_1.6.0            
-#> [55] rvest_1.0.5               parallel_4.6.1           
-#> [57] AnnotationDbi_1.75.2      BiocManager_1.30.27      
-#> [59] XVector_0.53.0            restfulr_0.0.17          
-#> [61] vctrs_0.7.3               Matrix_1.7-6             
-#> [63] jsonlite_2.0.0            hms_1.1.4                
-#> [65] bit64_4.8.6               GenomicFeatures_1.65.0   
-#> [67] glue_1.8.1                codetools_0.2-20         
-#> [69] gtable_0.3.6              stringi_1.8.9            
-#> [71] BiocVersion_3.24.0        GenomeInfoDb_1.49.1      
-#> [73] BiocIO_1.23.3             UCSC.utils_1.9.0         
-#> [75] tibble_3.3.1              pillar_1.11.1            
-#> [77] rappdirs_0.3.4            htmltools_0.5.9          
-#> [79] R6_2.6.1                  dbplyr_2.6.0             
-#> [81] httr2_1.3.0               evaluate_1.0.5           
-#> [83] lattice_0.23-1            readr_2.2.0              
-#> [85] AnnotationHub_4.3.3       cigarillo_1.3.1          
-#> [87] png_0.1-9                 Rsamtools_2.29.0         
-#> [89] memoise_2.0.1             Rcpp_1.1.2               
-#> [91] gridExtra_2.3.1           SparseArray_1.13.4       
-#> [93] xfun_0.62                 TCGAutils_1.33.3         
-#> [95] pkgconfig_2.0.3
+#>  [1] tidyselect_1.2.1          dplyr_1.2.1              
+#>  [3] blob_1.3.0                filelock_1.0.3           
+#>  [5] Biostrings_2.81.9         bitops_1.1-0             
+#>  [7] fastmap_1.2.0             RCurl_1.98-1.20          
+#>  [9] BiocFileCache_3.3.2       GenomicAlignments_1.49.2 
+#> [11] XML_3.99-0.25             digest_0.6.39            
+#> [13] lifecycle_1.0.5           KEGGREST_1.53.6          
+#> [15] RSQLite_3.53.3            magrittr_2.0.5           
+#> [17] compiler_4.6.1            rlang_1.3.0              
+#> [19] tools_4.6.1               yaml_2.3.12              
+#> [21] rtracklayer_1.73.0        knitr_1.52               
+#> [23] S4Arrays_1.13.2           bit_4.6.0                
+#> [25] curl_8.1.0                DelayedArray_0.39.8      
+#> [27] xml2_1.6.0                BiocParallel_1.47.0      
+#> [29] abind_1.4-8               withr_3.0.3              
+#> [31] purrr_1.2.2               grid_4.6.1               
+#> [33] ExperimentHub_3.3.2       cli_3.6.6                
+#> [35] rmarkdown_2.32            crayon_1.5.3             
+#> [37] otel_0.3.0                httr_1.4.9               
+#> [39] tzdb_0.5.0                rjson_0.2.23             
+#> [41] BiocBaseUtils_1.15.1      GenomicDataCommons_1.37.0
+#> [43] DBI_1.3.0                 cachem_1.1.0             
+#> [45] stringr_1.6.0             rvest_1.0.5              
+#> [47] parallel_4.6.1            AnnotationDbi_1.75.2     
+#> [49] BiocManager_1.30.27       XVector_0.53.0           
+#> [51] restfulr_0.0.17           vctrs_0.7.3              
+#> [53] Matrix_1.7-6              jsonlite_2.0.0           
+#> [55] hms_1.1.4                 bit64_4.8.6              
+#> [57] GenomicFeatures_1.65.0    glue_1.8.1               
+#> [59] codetools_0.2-20          stringi_1.8.9            
+#> [61] BiocVersion_3.24.0        GenomeInfoDb_1.49.1      
+#> [63] BiocIO_1.23.3             UCSC.utils_1.9.0         
+#> [65] tibble_3.3.1              pillar_1.11.1            
+#> [67] rappdirs_0.3.4            htmltools_0.5.9          
+#> [69] R6_2.6.1                  dbplyr_2.6.0             
+#> [71] httr2_1.3.0               evaluate_1.0.5           
+#> [73] lattice_0.23-1            readr_2.2.0              
+#> [75] AnnotationHub_4.3.3       cigarillo_1.3.1          
+#> [77] png_0.1-9                 Rsamtools_2.29.0         
+#> [79] memoise_2.0.1             SparseArray_1.13.4       
+#> [81] xfun_0.62                 TCGAutils_1.33.3         
+#> [83] pkgconfig_2.0.3
 ```
