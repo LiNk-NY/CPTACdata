@@ -64,15 +64,30 @@
 #' @seealso [cptacProjects]
 #'
 #' @examples
-#' \dontrun{
-#' mae <- curatedTCGAData::curatedTCGAData(
-#'     "OV", "RNASeq2GeneNorm", version = "2.1.1", dry.run = FALSE
+#' \donttest{
+#' ## Needs network access to the PDC, and asks you to accept its Data Use
+#' ## Agreement. A small object stands in for a curatedTCGAData object here.
+#' patients <- c("TCGA-BH-A18U", "TCGA-BH-A0C0", "TCGA-A8-A08Z")
+#' mae <- MultiAssayExperiment::MultiAssayExperiment(
+#'     experiments = list(
+#'         RNA = SummarizedExperiment::SummarizedExperiment(
+#'             matrix(
+#'                 0, nrow = 1L, ncol = 3L,
+#'                 dimnames = list("gene", patients)
+#'             )
+#'         )
+#'     ),
+#'     colData = S4Vectors::DataFrame(
+#'         admin.disease_code = rep("brca", 3L), row.names = patients
+#'     ),
+#'     sampleMap = S4Vectors::DataFrame(
+#'         assay = factor(rep("RNA", 3L)),
+#'         primary = patients,
+#'         colname = patients
+#'     )
 #' )
 #' appendCPTAC(mae, fraction = "Proteome", dry_run = TRUE)
 #' mae <- appendCPTAC(mae, fraction = "Proteome")
-#'
-#' appendCPTAC(mae, fraction = "Phosphoproteome", dry_run = TRUE)
-#' mae <- appendCPTAC(mae, fraction = "Phosphoproteome")
 #' }
 #' @export
 appendCPTAC <- function(
@@ -94,18 +109,7 @@ appendCPTAC <- function(
         paste0("TCGA-", sub("^TCGA-", "", toupper(project)))
     }
 
-    studies <- CPTACdata::cptacProjects
-    proj_and_frac <- studies[["tcga_project"]] %in% project &
-        studies[["analytical_fraction"]] %in% fraction
-    studies <- studies[proj_and_frac, , drop = FALSE]
-    if (nrow(studies) == 0L) {
-        stop(
-            sprintf("No CPTAC %s data for %s. ", fraction, project),
-            "See ?cptacProjects.",
-            call. = FALSE
-        )
-    }
-
+    studies <- .selectStudies(project, fraction)
     patients <- rownames(MultiAssayExperiment::colData(mae))
     # One single-row table per experiment, named by experiment so that every
     # later step looks studies up by name rather than by position
@@ -119,80 +123,115 @@ appendCPTAC <- function(
             .tcgaSpecimens(row)
         }
     })
-    matched <- lapply(specimens, function(studySpecimens) {
-        studySpecimens[
-            studySpecimens[["case_submitter_id"]] %in% patients,
-            ,
-            drop = FALSE
-        ]
-    })
+    matched <- lapply(specimens, .matchPatients, patients = patients)
 
-    nPatients <- function(studySpecimens) {
-        if (is.null(studySpecimens)) {
-            NA_integer_
-        } else {
-            length(unique(studySpecimens[["case_submitter_id"]]))
-        }
-    }
     if (dry_run) {
-        return(data.frame(
-            experiment = studies[["experiment"]],
-            pdc_study_id = studies[["pdc_study_id"]],
-            quant_available = !is.na(studies[["data_type"]]),
-            mae_patients = length(patients),
-            pdc_patients = unname(vapply(specimens, nPatients, integer(1L))),
-            matched_patients = unname(vapply(matched, nPatients, integer(1L))),
-            stringsAsFactors = FALSE
-        ))
+        return(.dryRunSummary(studies, specimens, matched, patients))
     }
-
     for (experimentName in names(studyRows)) {
-        row <- studyRows[[experimentName]]
-        if (is.na(row[["data_type"]])) {
-            warning(
-                sprintf(
-                    "%s (%s) has no quantification matrix in the ",
-                    row[["pdc_name"]],
-                    row[["pdc_study_id"]]
-                ),
-                "PDC; skipped.",
-                call. = FALSE
-            )
-            next
-        }
-        if (nrow(matched[[experimentName]]) == 0L) {
-            warning(
-                sprintf(
-                    "No patients in %s match the MAE; skipped.",
-                    row[["pdc_study_id"]]
-                ),
-                call. = FALSE
-            )
-            next
-        }
-        if (experimentName %in% names(mae)) {
-            message(sprintf("'%s' already present; skipped.", experimentName))
-            next
-        }
-        message(sprintf(
-            "Adding %s from %s (%d patients)...",
-            experimentName,
-            row[["pdc_study_id"]],
-            nPatients(matched[[experimentName]])
-        ))
-        experiment <- .buildCptacSE(row, matched[[experimentName]])
-        sampleMap <- S4Vectors::DataFrame(
-            assay = factor(rep(experimentName, ncol(experiment))),
-            primary = TCGAutils::TCGAbarcode(colnames(experiment)),
-            colname = colnames(experiment)
-        )
-        mae <- c(
+        mae <- .addStudy(
             mae,
-            stats::setNames(list(experiment), experimentName),
-            sampleMap = sampleMap
+            studyRows[[experimentName]],
+            matched[[experimentName]]
         )
     }
     mae
+}
+
+# ----------------------------------------------------------- appendCPTAC --
+
+# Rows of cptacProjects for one TCGA project and analytical fraction.
+.selectStudies <- function(project, fraction) {
+    studies <- .loadData("cptacProjects")
+    proj_and_frac <- studies[["tcga_project"]] %in% project &
+        studies[["analytical_fraction"]] %in% fraction
+    studies <- studies[proj_and_frac, , drop = FALSE]
+    if (nrow(studies) == 0L) {
+        stop(
+            sprintf("No CPTAC %s data for %s. ", fraction, project),
+            "See ?cptacProjects.",
+            call. = FALSE
+        )
+    }
+    studies
+}
+
+# The specimens of one study whose patients are in the MAE.
+.matchPatients <- function(studySpecimens, patients) {
+    studySpecimens[
+        studySpecimens[["case_submitter_id"]] %in% patients,
+        ,
+        drop = FALSE
+    ]
+}
+
+# Number of distinct patients, or NA when the study has no matrix.
+.nPatients <- function(studySpecimens) {
+    if (is.null(studySpecimens)) {
+        NA_integer_
+    } else {
+        length(unique(studySpecimens[["case_submitter_id"]]))
+    }
+}
+
+.dryRunSummary <- function(studies, specimens, matched, patients) {
+    data.frame(
+        experiment = studies[["experiment"]],
+        pdc_study_id = studies[["pdc_study_id"]],
+        quant_available = !is.na(studies[["data_type"]]),
+        mae_patients = length(patients),
+        pdc_patients = unname(vapply(specimens, .nPatients, integer(1L))),
+        matched_patients = unname(vapply(matched, .nPatients, integer(1L))),
+        stringsAsFactors = FALSE
+    )
+}
+
+# Add one study to the MAE, or skip it with a warning or message.
+.addStudy <- function(mae, row, matchedSpecimens) {
+    experimentName <- row[["experiment"]]
+    if (is.na(row[["data_type"]])) {
+        warning(
+            sprintf(
+                "%s (%s) has no quantification matrix in the ",
+                row[["pdc_name"]],
+                row[["pdc_study_id"]]
+            ),
+            "PDC; skipped.",
+            call. = FALSE
+        )
+        return(mae)
+    }
+    if (nrow(matchedSpecimens) == 0L) {
+        warning(
+            sprintf(
+                "No patients in %s match the MAE; skipped.",
+                row[["pdc_study_id"]]
+            ),
+            call. = FALSE
+        )
+        return(mae)
+    }
+    if (experimentName %in% names(mae)) {
+        message(sprintf("'%s' already present; skipped.", experimentName))
+        return(mae)
+    }
+    message(sprintf(
+        "Adding %s from %s (%d patients)...",
+        experimentName,
+        row[["pdc_study_id"]],
+        .nPatients(matchedSpecimens)
+    ))
+    experiment <- .buildCptacSE(row, matchedSpecimens)
+    sampleMap <- S4Vectors::DataFrame(
+        assay = factor(rep(experimentName, ncol(experiment))),
+        primary = TCGAutils::TCGAbarcode(colnames(experiment)),
+        colname = colnames(experiment)
+    )
+    c(
+        mae,
+        stats::setNames(list(experiment), experimentName),
+        sampleMap = sampleMap
+    )
 }
 
 
@@ -282,18 +321,7 @@ appendCPTAC <- function(
         drop = FALSE
     ]
     sampleData[["pdc_column"]] <- colnames(quantMatrix)[keep]
-
-    nMissing <- length(setdiff(
-        specimens[["case_submitter_id"]],
-        sampleData[["case_submitter_id"]]
-    ))
-    if (nMissing) {
-        message(sprintf(
-            "  %d matched patient(s) not in the %s matrix.",
-            nMissing,
-            row[["pdc_study_id"]]
-        ))
-    }
+    .reportUnmatched(specimens, sampleData, row[["pdc_study_id"]])
 
     quantMatrix <- quantMatrix[, keep, drop = FALSE]
     colnames(quantMatrix) <-
@@ -304,19 +332,41 @@ appendCPTAC <- function(
             sampleData,
             row.names = colnames(quantMatrix)
         ),
-        metadata = c(
-            list(
-                pdc_study_id = row[["pdc_study_id"]],
-                pdc_name = row[["pdc_name"]],
-                data_type = row[["data_type"]],
-                source = .PDC_URL
-            ),
-            studyVersion,
-            list(
-                retrieved = Sys.time(),
-                CPTACdata_version = as.character(
-                    utils::packageVersion("CPTACdata")
-                )
+        metadata = .experimentMetadata(row, studyVersion)
+    )
+}
+
+# Report patients in the MAE that the PDC matrix does not contain.
+.reportUnmatched <- function(specimens, sampleData, pdc_study_id) {
+    nMissing <- length(setdiff(
+        specimens[["case_submitter_id"]],
+        sampleData[["case_submitter_id"]]
+    ))
+    if (nMissing) {
+        message(sprintf(
+            "  %d matched patient(s) not in the %s matrix.",
+            nMissing,
+            pdc_study_id
+        ))
+    }
+    invisible(nMissing)
+}
+
+# Provenance stored with each experiment: where and when the matrix came
+# from, and which study version and package build it used.
+.experimentMetadata <- function(row, studyVersion) {
+    c(
+        list(
+            pdc_study_id = row[["pdc_study_id"]],
+            pdc_name = row[["pdc_name"]],
+            data_type = row[["data_type"]],
+            source = .PDC_URL
+        ),
+        studyVersion,
+        list(
+            retrieved = Sys.time(),
+            CPTACdata_version = as.character(
+                utils::packageVersion("CPTACdata")
             )
         )
     )

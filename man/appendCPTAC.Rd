@@ -84,15 +84,30 @@ Biospecimen tables are cached for the R session, so a \code{dry_run} followed by
 a real run downloads them only once.
 }
 \examples{
-\dontrun{
-mae <- curatedTCGAData::curatedTCGAData(
-    "OV", "RNASeq2GeneNorm", version = "2.1.1", dry.run = FALSE
+\donttest{
+## Needs network access to the PDC, and asks you to accept its Data Use
+## Agreement. A small object stands in for a curatedTCGAData object here.
+patients <- c("TCGA-BH-A18U", "TCGA-BH-A0C0", "TCGA-A8-A08Z")
+mae <- MultiAssayExperiment::MultiAssayExperiment(
+    experiments = list(
+        RNA = SummarizedExperiment::SummarizedExperiment(
+            matrix(
+                0, nrow = 1L, ncol = 3L,
+                dimnames = list("gene", patients)
+            )
+        )
+    ),
+    colData = S4Vectors::DataFrame(
+        admin.disease_code = rep("brca", 3L), row.names = patients
+    ),
+    sampleMap = S4Vectors::DataFrame(
+        assay = factor(rep("RNA", 3L)),
+        primary = patients,
+        colname = patients
+    )
 )
 appendCPTAC(mae, fraction = "Proteome", dry_run = TRUE)
 mae <- appendCPTAC(mae, fraction = "Proteome")
-
-appendCPTAC(mae, fraction = "Phosphoproteome", dry_run = TRUE)
-mae <- appendCPTAC(mae, fraction = "Phosphoproteome")
 }
 }
 \seealso{

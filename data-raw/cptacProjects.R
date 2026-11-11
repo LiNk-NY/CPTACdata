@@ -53,7 +53,7 @@ pdcTcgaStudies <- function(project_submitter_id = "CPTAC-TCGA") {
         })
     )))
 
-    data("diseaseCodes", package = "TCGAutils", envir = environment())
+    diseaseCodes <- .loadData("diseaseCodes", package = "TCGAutils")
     bind_rows(lapply(ids, function(id) {
         bio <- .pdcBiospecimenTable(id)
         if (!any(startsWith(bio[["case_submitter_id"]], "TCGA-"))) {

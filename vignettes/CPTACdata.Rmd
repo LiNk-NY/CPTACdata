@@ -60,15 +60,16 @@ BiocManager::install("CPTACdata")
 - `analytical_fraction`: Proteome, Phosphoproteome or Glycoproteome.
 - `data_type`: the PDC quantification matrix that is downloaded, or `NA`.
 - `pdc_disease_type`: a PDC label used to split a study that covers more than
-  one TCGA project, or `NA`.
+    one TCGA project, or `NA`.
 - `verified`: `TRUE` if every qualified TCGA patient in the study was found in
-  the GDC project when the data were built.
+    the GDC project when the data were built.
 
 Some rows have `data_type = NA`. For these studies the PDC holds biospecimen
 records, but its API returns no quantification matrix for any data type tried.
 `appendCPTAC()` skips them with a warning, so they never add an experiment.
 
 ```{r list-cptac-projects}
+data("cptacProjects", package = "CPTACdata")
 cptacProjects
 ```
 
@@ -110,10 +111,10 @@ Its columns are:
 - `experiment`: the name the study would be added as.
 - `pdc_study_id`: the PDC study identifier.
 - `quant_available`: `TRUE` if the PDC has a quantification matrix for the
-  study.
+    study.
 - `mae_patients`: the number of patients in the object.
 - `pdc_patients`: the number of TCGA patients in the study that pass the
-  specimen filters.
+    specimen filters.
 - `matched_patients`: the number of those patients that are also in the object.
 
 Studies without a matrix show `NA` for `pdc_patients` and `matched_patients`.

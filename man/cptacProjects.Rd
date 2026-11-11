@@ -29,7 +29,7 @@ and the GDC API (\url{https://api.gdc.cancer.gov}) by
 data types are curated in that script.
 }
 \usage{
-cptacProjects
+data(cptacProjects)
 }
 \description{
 A crosswalk between TCGA projects (e.g. \code{"TCGA-BRCA"}) and the
@@ -53,6 +53,7 @@ quantification matrix available through its API. They are listed with
 \code{data_type = NA} and are skipped by \code{\link[=appendCPTAC]{appendCPTAC()}}.
 }
 \examples{
+data("cptacProjects", package = "CPTACdata")
 cptacProjects
 
 }

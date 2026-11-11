@@ -8,7 +8,7 @@ test_that(".detectTcgaProject() reads admin.disease_code", {
 
 test_that(".tcgaSpecimens() drops non-TCGA and pooled specimens", {
     localPDC()
-    row <- cptacProjects
+    row <- .loadData("cptacProjects")
     row <- row[row$pdc_study_id == "PDC000173", ]
     spec <- .tcgaSpecimens(row)
     expect_true(all(startsWith(spec$sample_submitter_id, "TCGA-")))

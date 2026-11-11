@@ -1,5 +1,5 @@
 test_that("cptacProjects holds the full crosswalk", {
-    xw <- cptacProjects
+    xw <- .loadData("cptacProjects")
     expect_s3_class(xw, "data.frame")
     expect_identical(nrow(xw), 8L)
     expect_true(all(c("tcga_project", "pdc_study_id", "pdc_name", "experiment",

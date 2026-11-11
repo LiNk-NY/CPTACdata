@@ -40,6 +40,7 @@
 #'   data types are curated in that script.
 #'
 #' @examples
+#' data("cptacProjects", package = "CPTACdata")
 #' cptacProjects
 #'
 #' @docType data

@@ -18,7 +18,7 @@ fakeGQL <- function(query, ...) {
 # Stand-in for .pdcStudyCatalog(): one latest version per study, with
 # made-up identifiers.
 fakeCatalog <- function(latest_only = FALSE) {
-    ids <- unique(CPTACdata::cptacProjects[["pdc_study_id"]])
+    ids <- unique(.loadData("cptacProjects")[["pdc_study_id"]])
     data.frame(
         pdc_study_id = ids,
         study_id = paste0("uuid-", ids),
@@ -29,8 +29,7 @@ fakeCatalog <- function(latest_only = FALSE) {
 }
 
 localPDC <- function(env = parent.frame()) {
-    assign("tables", list(), envir = environment(.pdcBiospecimenTable))
-    assign("catalog", NULL, envir = environment(.pdcStudyVersion))
+    rm(list = ls(.pdcCache, all.names = TRUE), envir = .pdcCache)
     rm(list = ls(gqlCalls), envir = gqlCalls)
     local_mocked_bindings(
         .pdcGQL = fakeGQL,

@@ -20,11 +20,9 @@
             character(1L)
         )
         stop(
-            sprintf(
-                "PDC API error (HTTP %d): %s",
-                httr2::resp_status(response),
-                paste(messages, collapse = "; ")
-            ),
+            "PDC API request failed (HTTP ",
+            httr2::resp_status(response), "): ",
+            paste(messages, collapse = "; "),
             call. = FALSE
         )
     }
@@ -57,29 +55,30 @@
     "pool"
 )
 
+# Session cache for values fetched from the PDC: biospecimen tables and the
+# study catalog. Each is fetched once, so a dry run followed by a real run
+# does not download it twice.
+.pdcCache <- new.env(parent = emptyenv())
+
 # One row per aliquot.
-.pdcBiospecimenTable <- local({
-    ## only retrieve each study's table once per session, so that a dry run
-    ## followed by a real run does not download it twice
-    tables <- list()
-    function(pdc_study_id) {
-        if (is.null(tables[[pdc_study_id]])) {
-            query <- sprintf(
-                paste0(
-                    '{ biospecimenPerStudy(pdc_study_id: "%s" ',
-                    'acceptDUA: true) { %s } }'
-                ),
-                pdc_study_id,
-                paste(.BIOSPECIMEN_FIELDS, collapse = " ")
-            )
-            tables[[pdc_study_id]] <<- .recordsToDF(
-                .pdcGQL(query)[["biospecimenPerStudy"]],
-                .BIOSPECIMEN_FIELDS
-            )
-        }
-        tables[[pdc_study_id]]
+.pdcBiospecimenTable <- function(pdc_study_id) {
+    key <- paste0("biospecimen_", pdc_study_id)
+    if (is.null(.pdcCache[[key]])) {
+        query <- sprintf(
+            paste0(
+                '{ biospecimenPerStudy(pdc_study_id: "%s" ',
+                'acceptDUA: true) { %s } }'
+            ),
+            pdc_study_id,
+            paste(.BIOSPECIMEN_FIELDS, collapse = " ")
+        )
+        .pdcCache[[key]] <- .recordsToDF(
+            .pdcGQL(query)[["biospecimenPerStudy"]],
+            .BIOSPECIMEN_FIELDS
+        )
     }
-})
+    .pdcCache[[key]]
+}
 
 # Features x aliquot-label numeric matrix for a study.
 .pdcQuantMatrix <- function(pdc_study_id, data_type = "log2_ratio") {
@@ -104,9 +103,9 @@
     }
     header <- vapply(rows[[1L]], .toCharacter, character(1L))
     body <- rows[-1L]
-    values <- suppressWarnings(as.numeric(
-        unlist(lapply(body, `[`, -1L), use.names = FALSE)
-    ))
+    # "NaN" converts to NaN without a warning, so only real non-numeric text
+    # would warn
+    values <- as.numeric(unlist(lapply(body, `[`, -1L), use.names = FALSE))
     values[is.nan(values)] <- NA_real_
     if (length(values) != length(body) * (length(header) - 1L)) {
         stop("quantDataMatrix rows have unequal lengths.", call. = FALSE)
@@ -171,29 +170,23 @@
     catalog
 }
 
-# Version of a study that the PDC resolves its pdc_study_id to. The catalog
-# is fetched once per session, as the biospecimen tables are.
-.pdcStudyVersion <- local({
-    catalog <- NULL
-    function(pdc_study_id) {
-        if (is.null(catalog)) {
-            catalog <<- .pdcStudyCatalog(latest_only = TRUE)
-        }
-        match <- catalog[catalog[["pdc_study_id"]] == pdc_study_id, ,
-            drop = FALSE]
-        if (nrow(match) != 1L) {
-            stop(
-                sprintf(
-                    "PDC catalog has %d latest versions of '%s'.",
-                    nrow(match),
-                    pdc_study_id
-                ),
-                call. = FALSE
-            )
-        }
-        list(
-            pdc_study_version = match[["study_version"]],
-            pdc_study_uuid = match[["study_id"]]
+# Version of a study that the PDC resolves its pdc_study_id to.
+.pdcStudyVersion <- function(pdc_study_id) {
+    if (is.null(.pdcCache[["studyCatalog"]])) {
+        .pdcCache[["studyCatalog"]] <- .pdcStudyCatalog(latest_only = TRUE)
+    }
+    catalog <- .pdcCache[["studyCatalog"]]
+    match <- catalog[catalog[["pdc_study_id"]] == pdc_study_id, ,
+        drop = FALSE]
+    if (nrow(match) != 1L) {
+        stop(
+            "PDC catalog has ", nrow(match), " latest versions of '",
+            pdc_study_id, "'.",
+            call. = FALSE
         )
     }
-})
+    list(
+        pdc_study_version = match[["study_version"]],
+        pdc_study_uuid = match[["study_id"]]
+    )
+}
