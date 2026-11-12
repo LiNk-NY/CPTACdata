@@ -6,8 +6,8 @@
 #'
 #' Only patients already in `colData(mae)` are added. Specimens are kept if
 #' they carry a TCGA barcode, are "Qualified" and not pooled. Each new
-#' experiment has one column per TCGA sample (e.g. `TCGA-24-1555-01A`);
-#' technical replicates are reduced to the first one. Missing values are
+#' experiment has one column per column of the PDC matrix, including every
+#' technical replicate unless `replicates = "first"`. Missing values are
 #' `NA`. The quantification is the PDC Common Data Analysis Pipeline value
 #' given by the `data_type` column of [cptacProjects] (log2 ratios to a common
 #' reference).
@@ -22,6 +22,10 @@
 #' @param fraction The assay type to add: one of `"Proteome"` (default),
 #'   `"Phosphoproteome"` or `"Glycoproteome"`. Call `appendCPTAC` once per
 #'   type to add several.
+#' @param replicates How to handle technical replicates, which the PDC marks
+#'   with a `.1`, `.2` suffix on the matrix column. `"all"` (default) keeps
+#'   every replicate as its own column; `"first"` keeps only the first
+#'   replicate of each sample.
 #' @param dry_run If `TRUE`, download only sample metadata and return a
 #'   one-row-per-study summary of what would be added.
 #'
@@ -31,11 +35,16 @@
 #'   - One assay, named after the `data_type` of the study (e.g.
 #'     `"log2_ratio"`), holding the PDC quantification matrix for the matched
 #'     samples. Rows are genes or protein sites, and missing values are `NA`.
-#'   - Columns named by TCGA sample barcode (e.g. `TCGA-24-1555-01A`), one per
-#'     matched sample. Technical replicates are reduced to the first one.
+#'   - Columns named by the PDC matrix label, with `TCGA-` added where the PDC
+#'     leaves it out. Proteome labels are sample barcodes (e.g.
+#'     `TCGA-BH-A18U-01A`) and phosphoproteome labels are aliquot barcodes
+#'     (e.g. `TCGA-24-1555-01A-32-2224-29`). The PDC marks technical
+#'     replicates with a `.1`, `.2` suffix, which is kept (e.g.
+#'     `TCGA-C8-A131-01A.1` and `TCGA-C8-A131-01A.2`).
 #'   - `colData` with `case_submitter_id` (TCGA patient barcode),
-#'     `aliquot_submitter_id`, `sample_type`, and `pdc_column` (the column
-#'     label in the PDC matrix).
+#'     `sample_submitter_id` (TCGA sample barcode, shared by the replicates
+#'     of a sample), `aliquot_submitter_id`, `sample_type`, and `pdc_column`
+#'     (the column label in the PDC matrix).
 #'   - `metadata` with `pdc_study_id`, `pdc_name`, `data_type`, `source` (the
 #'     PDC GraphQL URL), `pdc_study_version` and `pdc_study_uuid` (the PDC
 #'     version of the study and its identifier, which pins that version),
@@ -95,6 +104,7 @@ appendCPTAC <- function(
     mae,
     project = NULL,
     fraction = c("Proteome", "Phosphoproteome", "Glycoproteome"),
+    replicates = c("all", "first"),
     dry_run = FALSE
 ) {
     stopifnot(
@@ -103,6 +113,7 @@ appendCPTAC <- function(
         length(dry_run) == 1L
     )
     fraction <- match.arg(fraction)
+    replicates <- match.arg(replicates)
 
     project <- if (is.null(project)) {
         .detectTcgaProject(mae)
@@ -133,7 +144,8 @@ appendCPTAC <- function(
         mae <- .addStudy(
             mae,
             studyRows[[experimentName]],
-            matched[[experimentName]]
+            matched[[experimentName]],
+            replicates
         )
     }
     mae
@@ -188,7 +200,7 @@ appendCPTAC <- function(
 }
 
 # Add one study to the MAE, or skip it with a warning or message.
-.addStudy <- function(mae, row, matchedSpecimens) {
+.addStudy <- function(mae, row, matchedSpecimens, replicates) {
     experimentName <- row[["experiment"]]
     if (is.na(row[["data_type"]])) {
         warning(
@@ -222,10 +234,10 @@ appendCPTAC <- function(
         row[["pdc_study_id"]],
         .nPatients(matchedSpecimens)
     ))
-    experiment <- .buildCptacSE(row, matchedSpecimens)
+    experiment <- .buildCptacSE(row, matchedSpecimens, replicates)
     sampleMap <- S4Vectors::DataFrame(
         assay = factor(rep(experimentName, ncol(experiment))),
-        primary = TCGAutils::TCGAbarcode(colnames(experiment)),
+        primary = experiment[["case_submitter_id"]],
         colname = colnames(experiment)
     )
     c(
@@ -306,27 +318,39 @@ appendCPTAC <- function(
     match(sampleBarcodes, biospecimens[["sample_submitter_id"]])
 }
 
-.buildCptacSE <- function(row, specimens) {
+# Column names are the PDC matrix labels, which are unique and keep the
+# replicate suffix. Proteome labels lack the "TCGA-" prefix, so it is added.
+.labelsToColnames <- function(labels) {
+    ifelse(startsWith(labels, "TCGA-"), labels, paste0("TCGA-", labels))
+}
+
+.buildCptacSE <- function(row, specimens, replicates = "all") {
     studyVersion <- .pdcStudyVersion(row[["pdc_study_id"]])
     quantMatrix <- .pdcQuantMatrix(row[["pdc_study_id"]], row[["data_type"]])
-    # PDC column order is arbitrary; sorting keeps replicate ".1" over ".2"
+    # PDC column order is arbitrary; sorting puts replicate ".1" before ".2"
     quantMatrix <- quantMatrix[, order(colnames(quantMatrix)), drop = FALSE]
     specimenIndex <- .matchQuantColumns(colnames(quantMatrix), specimens)
     keep <- !is.na(specimenIndex)
-    keep[keep] <- !duplicated(
-        specimens[["sample_submitter_id"]][specimenIndex[keep]]
-    )
+    if (identical(replicates, "first")) {
+        keep[keep] <- !duplicated(
+            specimens[["sample_submitter_id"]][specimenIndex[keep]]
+        )
+    }
     sampleData <- specimens[
         specimenIndex[keep],
-        c("case_submitter_id", "aliquot_submitter_id", "sample_type"),
+        c(
+            "case_submitter_id",
+            "sample_submitter_id",
+            "aliquot_submitter_id",
+            "sample_type"
+        ),
         drop = FALSE
     ]
     sampleData[["pdc_column"]] <- colnames(quantMatrix)[keep]
     .reportUnmatched(specimens, sampleData, row[["pdc_study_id"]])
 
     quantMatrix <- quantMatrix[, keep, drop = FALSE]
-    colnames(quantMatrix) <-
-        specimens[["sample_submitter_id"]][specimenIndex[keep]]
+    colnames(quantMatrix) <- .labelsToColnames(sampleData[["pdc_column"]])
     SummarizedExperiment::SummarizedExperiment(
         assays = stats::setNames(list(quantMatrix), row[["data_type"]]),
         colData = S4Vectors::DataFrame(
