@@ -2,11 +2,21 @@
 # matrices are trimmed to their first 5 features.
 gqlCalls <- new.env()
 
+# Fixture file prefix for each GraphQL query name.
+fixtureTypes <- c(
+    biospecimenPerStudy = "bio",
+    quantDataMatrix = "quant",
+    paginatedCaseDemographicsPerStudy = "demo",
+    paginatedCaseDiagnosesPerStudy = "diag"
+)
+
 # Stand-in for .pdcGQL(): replay the captured response for the study named in
 # the query, or fail the way the PDC does when no matrix exists.
 fakeGQL <- function(query, ...) {
     id <- regmatches(query, regexpr("PDC[0-9]{6}", query))
-    type <- if (grepl("quantDataMatrix", query)) "quant" else "bio"
+    queryName <- regmatches(query, regexpr("[A-Za-z]+(?=\\()", query,
+                                           perl = TRUE))
+    type <- fixtureTypes[[queryName]]
     key <- paste(type, id, sep = "_")
     gqlCalls[[key]] <- sum(gqlCalls[[key]], 1L)
     f <- test_path("fixtures", sprintf("gql_%s.rds", key))
@@ -18,7 +28,10 @@ fakeGQL <- function(query, ...) {
 # Stand-in for .pdcStudyCatalog(): one latest version per study, with
 # made-up identifiers.
 fakeCatalog <- function(latest_only = FALSE) {
-    ids <- unique(.loadData("cptacProjects")[["pdc_study_id"]])
+    ids <- unique(c(
+        .loadData("cptacProjects")[["pdc_study_id"]],
+        .loadData("cptacCohorts")[["pdc_study_id"]]
+    ))
     data.frame(
         pdc_study_id = ids,
         study_id = paste0("uuid-", ids),

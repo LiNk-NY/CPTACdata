@@ -1,0 +1,140 @@
+---
+title: "Downloading CPTAC cohorts as MultiAssayExperiment objects"
+author: "Marcel Ramos"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Downloading CPTAC cohorts as MultiAssayExperiment objects}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+# Overview
+
+Most CPTAC data come from cohorts with their own patients rather than TCGA
+tumors: the CPTAC-3 discovery and confirmatory cohorts (e.g. clear cell
+renal cell carcinoma, glioblastoma, lung adenocarcinoma) and the CPTAC-2
+Prospective collections. Each cohort is profiled in several Proteomic Data
+Commons (PDC) studies, one for each experiment, such as the proteome and the
+phosphoproteome. `getCPTAC()` downloads the studies of a cohort and combines
+them in one `MultiAssayExperiment`, with the PDC clinical data of the
+patients as `colData`.
+
+To add CPTAC data run on TCGA tumors to a `MultiAssayExperiment` from
+`curatedTCGAData`, use `appendCPTAC()` instead; see the vignette "Adding
+CPTAC proteomics to a TCGA MultiAssayExperiment"
+(`vignette("CPTACdata", package = "CPTACdata")`).
+
+```{r load-packages, message = FALSE}
+library(CPTACdata)
+library(MultiAssayExperiment)
+```
+
+# Which cohorts are available?
+
+`cptacCohorts` has one row per PDC study. Its columns are:
+
+- `cohort`: the cohort the study belongs to.
+- `experiment`: the name of the experiment in the `MultiAssayExperiment`.
+- `pdc_study_id`: the PDC study identifier.
+- `pdc_name`: the PDC study name.
+- `pdc_project`: the PDC project, "CPTAC3 Discovery and Confirmatory" or
+    "CPTAC-2".
+- `analytical_fraction`: the PDC analytical fraction, such as Proteome,
+    Phosphoproteome or Acetylome.
+- `experiment_type`: the labeling or acquisition, such as `TMT10` or
+    `Label Free`.
+- `data_type`: the PDC quantification matrix that is downloaded, or `NA`.
+
+`cptacCohorts` ships with the package and needs no network access:
+
+```{r list-cptac-cohorts}
+data("cptacCohorts", package = "CPTACdata")
+table(cptacCohorts[["cohort"]])
+cptacCohorts[
+    cptacCohorts[["cohort"]] == "CPTAC CCRCC Discovery Study",
+    c("experiment", "pdc_study_id", "analytical_fraction", "data_type")
+]
+```
+
+Some studies, such as most metabolome and lipidome studies, have
+`data_type = NA`. The PDC holds their biospecimen records, but its API
+returns no quantification matrix, so `getCPTAC()` skips them.
+
+# Downloading a cohort
+
+The dry run and the download query the PDC API at
+`https://pdc.cancer.gov/graphql`. Biospecimen and clinical tables are cached
+for the R session, so a dry run followed by a download fetches each one only
+once.
+
+The CPTAC data are provided under the PDC Data Use Agreement at
+<https://proteomic.datacommons.cancer.gov/pdc/data-use-guidelines>. Read it
+before running the next chunk, which accepts it on your behalf for this
+document:
+
+```{r accept-pdc-dua}
+options(CPTACdata.acceptDUA = TRUE)
+```
+
+A dry run shows, for each study, whether it has a matrix and how many
+patients and aliquots it covers, without downloading any matrix:
+
+```{r cohort-dry-run}
+getCPTAC("CPTAC CCRCC Discovery Study", dry_run = TRUE)
+```
+
+By default `getCPTAC()` downloads every study of the cohort that has a
+matrix. Use `experiments` to choose some of them. Here we download the
+proteome only:
+
+```{r get-cohort, message = FALSE}
+ccrcc <- getCPTAC("CPTAC CCRCC Discovery Study", experiments = "Proteome")
+ccrcc
+```
+
+# What the object contains
+
+Each experiment is a `SummarizedExperiment` with one assay, named after its
+`data_type`. For TMT studies this is `log2_ratio`: the log2 ratio of a
+sample's abundance to the common reference the PDC used for the whole study.
+Label-free studies have `precursor_area` instead, which is not on a log
+scale.
+
+Columns keep the labels of the PDC matrix, which for these cohorts are the
+PDC aliquot identifiers. Technical replicates keep the `.1`, `.2` suffix the
+PDC gives them; use `replicates = "first"` to keep only the first replicate
+of each sample. Reference channels, such as the internal reference pool, QC
+samples and NCI-7 cell lines, are dropped.
+
+The `colData` of each experiment describes its samples:
+
+```{r cohort-samples}
+colData(ccrcc[["Proteome"]])
+table(ccrcc[["Proteome"]][["sample_type"]])
+```
+
+The `sampleMap` links each column to its patient, so a patient's tumor and
+normal samples share one row of the `colData` of the
+`MultiAssayExperiment`. That `colData` holds the PDC clinical data, with
+values kept as the PDC reports them:
+
+```{r cohort-clinical}
+head(colData(ccrcc)[, c("gender", "primary_diagnosis", "tumor_grade")])
+```
+
+Each experiment also records where its data came from, including the PDC
+study version and the time the matrix was downloaded:
+
+```{r cohort-metadata}
+S4Vectors::metadata(ccrcc[["Proteome"]])
+```
+
+# Session info
+
+```{r session-info}
+sessionInfo()
+```
