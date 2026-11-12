@@ -18,10 +18,11 @@ The PDC data are provided under the PDC Data Use Agreement, available at
 the package makes its first request to the PDC, it asks you to read these
 terms and accept them. Your answer is kept only for the current R session.
 
-In a non-interactive session, such as a script or a batch job, the
-package stops with an error until you accept the terms. To accept them,
-read the agreement and run \code{options(CPTACdata.acceptDUA = TRUE)} before
-calling the package.
+To accept the terms without the prompt, read the agreement and run
+\code{options(CPTACdata.acceptDUA = TRUE)} before calling the package. The
+prompt mentions this option. Set it in a script or batch job, where the
+package otherwise stops with an error, or in your \code{.Rprofile} to accept the
+terms in every session.
 }
 
 \section{Licence and attribution}{
