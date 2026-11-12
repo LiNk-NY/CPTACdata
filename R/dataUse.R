@@ -14,21 +14,34 @@
     "including any acknowledgement or citation requirements."
 )
 
+# How to accept the agreement through the package option, shown both in the
+# interactive prompt and in the non-interactive error.
+.DUA_OPTION_MESSAGE <- paste0(
+    "Accepting at the prompt applies to this R session only. To accept\n",
+    "without a prompt, for example in scripts or in every session from your\n",
+    ".Rprofile, read the terms and run:\n",
+    "  options(CPTACdata.acceptDUA = TRUE)"
+)
+
+# Wrapper so that tests can mock interactive().
+.isInteractive <- function() {
+    interactive()
+}
+
 .checkDataUse <- function() {
     if (isTRUE(.dataUse[["accepted"]]) ||
         isTRUE(getOption("CPTACdata.acceptDUA"))) {
         return(invisible(TRUE))
     }
-    if (!interactive()) {
+    if (!.isInteractive()) {
         stop(
             "The PDC Data Use Agreement has not been accepted. ",
             .DUA_MESSAGE, "\n",
-            "To accept in a non-interactive session, read the terms and run ",
-            "options(CPTACdata.acceptDUA = TRUE) before calling CPTACdata.",
+            .DUA_OPTION_MESSAGE,
             call. = FALSE
         )
     }
-    message(.DUA_MESSAGE)
+    message(.DUA_MESSAGE, "\n\n", .DUA_OPTION_MESSAGE)
     accepted <- BiocBaseUtils::askUserYesNo(
         "Do you accept the PDC Data Use Agreement?"
     )
