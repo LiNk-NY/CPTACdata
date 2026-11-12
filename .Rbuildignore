@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.github$
 ^dev$
 ^data-raw$
 ^inst/scripts/README_cache$
