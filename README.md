@@ -1,10 +1,31 @@
 
+# CPTACdata
+
 # Overview
 
 The Clinical Proteomic Tumor Analysis Consortium (CPTAC) profiled the
 proteomes of several hundred TCGA tumors. `CPTACdata` downloads those
 data from the Proteomic Data Commons (PDC) and appends them to a
-`MultiAssayExperiment` from `curatedTCGAData`.
+`MultiAssayExperiment` from `curatedTCGAData`. It also downloads the
+CPTAC cohorts that use their own patients as new `MultiAssayExperiment`
+objects; see the vignette “Downloading CPTAC cohorts as
+MultiAssayExperiment objects”
+(`vignette("CPTACcohorts", package = "CPTACdata")`).
+
+TCGA measured the genome and transcriptome of these tumors, and only a
+small panel of proteins with antibody arrays. Mass-spectrometry
+proteomics measures the protein layer directly, and protein levels often
+differ from mRNA levels, so matched protein data lets you compare the
+layers in the same patients. Adding the CPTAC data to a
+`MultiAssayExperiment` you already use keeps the samples aligned across
+all assays.
+
+`cBioPortalData` also returns cancer study data as
+`MultiAssayExperiment` objects, and it includes TCGA reverse-phase
+protein array (RPPA) data. `CPTACdata` reads the mass-spectrometry
+quantifications directly from the PDC for the CPTAC-TCGA cohorts. Check
+whether the cBioPortal studies you need contain the same CPTAC data
+before choosing between the two.
 
 ``` r
 library(CPTACdata)
@@ -12,9 +33,39 @@ library(curatedTCGAData)
 library(MultiAssayExperiment)
 ```
 
-# Which TCGA projects have CPTAC data?
+# Installation
 
 ``` r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("CPTACdata")
+```
+
+# Which TCGA projects have CPTAC data?
+
+`cptacProjects` has one row per TCGA project and PDC study. Its columns
+are:
+
+- `tcga_project`: the TCGA project the study covers.
+- `pdc_study_id`: the PDC study identifier.
+- `pdc_name`: the PDC study name.
+- `experiment`: the name given to the experiment added to the object.
+- `analytical_fraction`: Proteome, Phosphoproteome or Glycoproteome.
+- `data_type`: the PDC quantification matrix that is downloaded, or
+  `NA`.
+- `pdc_disease_type`: a PDC label used to split a study that covers more
+  than one TCGA project, or `NA`.
+- `verified`: `TRUE` if every qualified TCGA patient in the study was
+  found in the GDC project when the data were built.
+
+Some rows have `data_type = NA`. For these studies the PDC holds
+biospecimen records, but its API returns no quantification matrix for
+any data type tried. `appendCPTAC()` skips them with a warning, so they
+never add an experiment.
+
+``` r
+data("cptacProjects", package = "CPTACdata")
 cptacProjects
 #>   tcga_project pdc_study_id                                          pdc_name
 #> 1    TCGA-BRCA    PDC000173                       TCGA Breast Cancer Proteome
@@ -51,6 +102,22 @@ Start with any `curatedTCGAData` object for one TCGA project. Only
 patients in its `colData` can be matched, so include enough assays to
 cover the patients of interest.
 
+Downloading the TCGA object, the dry run and the append all need network
+access. The dry run and the append query the PDC API at
+`https://pdc.cancer.gov/graphql`. `cptacProjects` ships with the package
+and needs no network access. Biospecimen tables are cached for the R
+session, so a dry run followed by an append downloads each one only
+once.
+
+The CPTAC data are provided under the PDC Data Use Agreement at
+<https://proteomic.datacommons.cancer.gov/pdc/data-use-guidelines>. Read
+it before running the next chunk, which accepts it on your behalf for
+this document:
+
+``` r
+options(CPTACdata.acceptDUA = TRUE)
+```
+
 ``` r
 mae <- curatedTCGAData("OV", "RPPAArray", version = "2.1.1", dry.run = FALSE)
 ```
@@ -67,6 +134,22 @@ appendCPTAC(mae, dry_run = TRUE)
 #> 1              119
 #> 2               81
 ```
+
+The dry run returns one row per study for the requested project and
+fraction. Its columns are:
+
+- `experiment`: the name the study would be added as.
+- `pdc_study_id`: the PDC study identifier.
+- `quant_available`: `TRUE` if the PDC has a quantification matrix for
+  the study.
+- `mae_patients`: the number of patients in the object.
+- `pdc_patients`: the number of TCGA patients in the study that pass the
+  specimen filters.
+- `matched_patients`: the number of those patients that are also in the
+  object.
+
+Studies without a matrix show `NA` for `pdc_patients` and
+`matched_patients`.
 
 Then add the data. The project is detected from `colData`, and the
 **proteome is added by default**. Call `appendCPTAC()` again for other
@@ -122,6 +205,48 @@ mae[["CPTAC_PNNL_Proteome"]]
 #> colData names(4): case_submitter_id aliquot_submitter_id sample_type
 #>   pdc_column
 ```
+
+Each new experiment is a `SummarizedExperiment` with one assay, named
+after its `data_type`. For the proteome and phosphoproteome the assay is
+`log2_ratio`. Each value is the log2 ratio of a sample’s abundance to a
+common reference that the PDC used for the whole study. A value of 0
+means the same abundance as the reference, 1 means twice the reference,
+and -1 means half. The reference is set per study, so compare values
+across experiments with care.
+
+Each experiment also records where its data came from, in its metadata.
+This includes the PDC study version and the time the matrix was
+downloaded:
+
+``` r
+S4Vectors::metadata(mae[["CPTAC_PNNL_Proteome"]])
+#> $pdc_study_id
+#> [1] "PDC000114"
+#> 
+#> $pdc_name
+#> [1] "TCGA Ovarian PNNL Proteome"
+#> 
+#> $data_type
+#> [1] "log2_ratio"
+#> 
+#> $source
+#> [1] "https://pdc.cancer.gov/graphql"
+```
+
+Rows are genes in the proteome. In the phosphoproteome they are RefSeq
+protein and site identifiers, such as `NP_000005.2:s710`. Columns keep
+the labels of the PDC matrix, with `TCGA-` added where the PDC leaves it
+out: sample barcodes in the proteome and aliquot barcodes in the
+phosphoproteome. Missing values are stored as `NA`.
+
+Technical replicates of a sample carry a `.1`, `.2` suffix in the PDC
+matrix. All replicates are kept, and the suffix stays in the column
+name, such as `TCGA-C8-A131-01A.1` and `TCGA-C8-A131-01A.2`. The
+`sample_submitter_id` column of `colData` gives the sample barcode
+shared by the replicates. Use `replicates = "first"` to keep only the
+first replicate of each sample. Patients who are in the object but
+missing from the PDC matrix get no column, and the append reports how
+many there are.
 
 The JHU and PNNL ovarian proteomes are separate experiments that share
 some patients:
