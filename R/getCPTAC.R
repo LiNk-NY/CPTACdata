@@ -103,12 +103,14 @@ getCPTAC <- function(
         studies,
         factor(studies[["experiment"]], levels = studies[["experiment"]])
     )
-    specimens <- lapply(studyRows, .cohortSpecimens)
+    available <- !is.na(studies[["data_type"]])
 
     if (dry_run) {
+        specimens <- lapply(studyRows, .cohortSpecimens)
         return(.cohortDryRun(studies, specimens))
     }
-    available <- !is.na(studies[["data_type"]])
+    # biospecimens are only needed for studies that will be downloaded
+    specimens <- lapply(studyRows[available], .cohortSpecimens)
     experimentList <- .downloadCohortStudies(
         studyRows,
         specimens,
