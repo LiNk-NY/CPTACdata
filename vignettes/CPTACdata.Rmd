@@ -20,9 +20,8 @@ The Clinical Proteomic Tumor Analysis Consortium (CPTAC) profiled the
 proteomes of several hundred TCGA tumors. `CPTACdata` downloads those data
 from the Proteomic Data Commons (PDC) and appends them to a
 `MultiAssayExperiment` from `curatedTCGAData`. It also downloads the CPTAC
-cohorts that use their own patients as new `MultiAssayExperiment` objects;
-see the vignette "Downloading CPTAC cohorts as MultiAssayExperiment objects"
-(`vignette("CPTACcohorts", package = "CPTACdata")`).
+cohorts that use their own patients; see
+[CPTAC cohorts beyond TCGA](#cptac-cohorts-beyond-tcga).
 
 TCGA measured the genome and transcriptome of these tumors, and only a small
 panel of proteins with antibody arrays. Mass-spectrometry proteomics measures
@@ -50,6 +49,23 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("CPTACdata")
+```
+
+# CPTAC cohorts beyond TCGA
+
+This vignette covers CPTAC data generated on TCGA tumors. Most CPTAC data
+come from cohorts with their own patients instead: the CPTAC-3 discovery and
+confirmatory cohorts, such as clear cell renal cell carcinoma, glioblastoma
+and lung adenocarcinoma, and the CPTAC-2 Prospective collections.
+`getCPTAC()` downloads one of these cohorts as a new `MultiAssayExperiment`,
+with one experiment per PDC study and the PDC clinical data of its patients.
+The cohorts are listed in `cptacCohorts`.
+
+The vignette "Downloading CPTAC cohorts as MultiAssayExperiment objects"
+walks through an example:
+
+```{r cohorts-vignette, eval = FALSE}
+vignette("CPTACcohorts", package = "CPTACdata")
 ```
 
 # Which TCGA projects have CPTAC data?
