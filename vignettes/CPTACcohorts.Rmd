@@ -3,7 +3,7 @@ title: "Downloading CPTAC cohorts as MultiAssayExperiment objects"
 author: "Marcel Ramos"
 output: BiocStyle::html_document
 vignette: >
-  %\VignetteIndexEntry{Downloading CPTAC cohorts as MultiAssayExperiment objects}
+  %\VignetteIndexEntry{Download CPTAC cohorts as MultiAssayExperiment objects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
