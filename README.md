@@ -7,10 +7,8 @@ The Clinical Proteomic Tumor Analysis Consortium (CPTAC) profiled the
 proteomes of several hundred TCGA tumors. `CPTACdata` downloads those
 data from the Proteomic Data Commons (PDC) and appends them to a
 `MultiAssayExperiment` from `curatedTCGAData`. It also downloads the
-CPTAC cohorts that use their own patients as new `MultiAssayExperiment`
-objects; see the vignette “Downloading CPTAC cohorts as
-MultiAssayExperiment objects”
-(`vignette("CPTACcohorts", package = "CPTACdata")`).
+CPTAC cohorts that use their own patients; see [CPTAC cohorts beyond
+TCGA](#cptac-cohorts-beyond-tcga).
 
 TCGA measured the genome and transcriptome of these tumors, and only a
 small panel of proteins with antibody arrays. Mass-spectrometry
@@ -40,6 +38,24 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("CPTACdata")
+```
+
+# CPTAC cohorts beyond TCGA
+
+This vignette covers CPTAC data generated on TCGA tumors. Most CPTAC
+data come from cohorts with their own patients instead: the CPTAC-3
+discovery and confirmatory cohorts, such as clear cell renal cell
+carcinoma, glioblastoma and lung adenocarcinoma, and the CPTAC-2
+Prospective collections. `getCPTAC()` downloads one of these cohorts as
+a new `MultiAssayExperiment`, with one experiment per PDC study and the
+PDC clinical data of its patients. The cohorts are listed in
+`cptacCohorts`.
+
+The vignette “Downloading CPTAC cohorts as MultiAssayExperiment objects”
+walks through an example:
+
+``` r
+vignette("CPTACcohorts", package = "CPTACdata")
 ```
 
 # Which TCGA projects have CPTAC data?
@@ -185,25 +201,25 @@ links them to patients:
 ``` r
 tail(sampleMap(mae))
 #> DataFrame with 6 rows and 3 columns
-#>                             assay      primary          colname
-#>                          <factor>  <character>      <character>
-#> [688,] CPTAC_PNNL_Phosphoproteome TCGA-61-1907 TCGA-61-1907-01A
-#> [689,] CPTAC_PNNL_Phosphoproteome TCGA-61-1919 TCGA-61-1919-01A
-#> [690,] CPTAC_PNNL_Phosphoproteome TCGA-61-1995 TCGA-61-1995-01A
-#> [691,] CPTAC_PNNL_Phosphoproteome TCGA-61-2008 TCGA-61-2008-01A
-#> [692,] CPTAC_PNNL_Phosphoproteome TCGA-61-2095 TCGA-61-2095-01A
-#> [693,] CPTAC_PNNL_Phosphoproteome TCGA-61-2612 TCGA-61-2612-01A
+#>                             assay      primary                colname
+#>                          <factor>  <character>            <character>
+#> [688,] CPTAC_PNNL_Phosphoproteome TCGA-61-1907 TCGA-61-1907-01A-32-..
+#> [689,] CPTAC_PNNL_Phosphoproteome TCGA-61-1919 TCGA-61-1919-01A-31-..
+#> [690,] CPTAC_PNNL_Phosphoproteome TCGA-61-1995 TCGA-61-1995-01A-32-..
+#> [691,] CPTAC_PNNL_Phosphoproteome TCGA-61-2008 TCGA-61-2008-01A-42-..
+#> [692,] CPTAC_PNNL_Phosphoproteome TCGA-61-2095 TCGA-61-2095-01A-31-..
+#> [693,] CPTAC_PNNL_Phosphoproteome TCGA-61-2612 TCGA-61-2612-01A-31-..
 mae[["CPTAC_PNNL_Proteome"]]
 #> class: SummarizedExperiment 
 #> dim: 7480 81 
-#> metadata(4): pdc_study_id pdc_name data_type source
+#> metadata(8): pdc_study_id pdc_name ... retrieved CPTACdata_version
 #> assays(1): log2_ratio
 #> rownames(7480): A1BG A2M ... ZYX ZZEF1
 #> rowData names(0):
 #> colnames(81): TCGA-09-1664-01A TCGA-13-1484-01A ... TCGA-61-2096-01A
 #>   TCGA-61-2612-01A
-#> colData names(4): case_submitter_id aliquot_submitter_id sample_type
-#>   pdc_column
+#> colData names(5): case_submitter_id sample_submitter_id
+#>   aliquot_submitter_id sample_type pdc_column
 ```
 
 Each new experiment is a `SummarizedExperiment` with one assay, named
@@ -231,6 +247,18 @@ S4Vectors::metadata(mae[["CPTAC_PNNL_Proteome"]])
 #> 
 #> $source
 #> [1] "https://pdc.cancer.gov/graphql"
+#> 
+#> $pdc_study_version
+#> [1] "1"
+#> 
+#> $pdc_study_uuid
+#> [1] "baa8ae46-57b8-11e8-b07a-00a098d917f8"
+#> 
+#> $retrieved
+#> [1] "2026-11-12 16:08:36 EST"
+#> 
+#> $CPTACdata_version
+#> [1] "0.99.7"
 ```
 
 Rows are genes in the proteome. In the phosphoproteome they are RefSeq
@@ -285,13 +313,13 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] curatedTCGAData_1.35.0      MultiAssayExperiment_1.39.2
+#>  [1] curatedTCGAData_1.35.1      MultiAssayExperiment_1.39.1
 #>  [3] SummarizedExperiment_1.43.0 Biobase_2.73.2             
 #>  [5] GenomicRanges_1.65.4        Seqinfo_1.3.2              
 #>  [7] IRanges_2.47.5              S4Vectors_0.51.10          
 #>  [9] BiocGenerics_0.59.12        generics_0.1.4             
 #> [11] MatrixGenerics_1.25.0       matrixStats_1.5.0          
-#> [13] CPTACdata_0.99.4           
+#> [13] CPTACdata_0.99.7           
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1          dplyr_1.2.1              
@@ -312,28 +340,28 @@ sessionInfo()
 #> [31] purrr_1.2.2               grid_4.6.1               
 #> [33] ExperimentHub_3.3.2       cli_3.6.6                
 #> [35] rmarkdown_2.32            crayon_1.5.3             
-#> [37] otel_0.3.0                httr_1.4.9               
-#> [39] tzdb_0.5.0                rjson_0.2.23             
-#> [41] BiocBaseUtils_1.15.1      GenomicDataCommons_1.37.0
-#> [43] DBI_1.3.0                 cachem_1.1.0             
-#> [45] stringr_1.6.0             rvest_1.0.5              
-#> [47] parallel_4.6.1            AnnotationDbi_1.75.2     
-#> [49] BiocManager_1.30.27       XVector_0.53.0           
-#> [51] restfulr_0.0.17           vctrs_0.7.3              
-#> [53] Matrix_1.7-6              jsonlite_2.0.0           
-#> [55] hms_1.1.4                 bit64_4.8.6              
-#> [57] GenomicFeatures_1.65.0    glue_1.8.1               
-#> [59] codetools_0.2-20          stringi_1.8.9            
-#> [61] BiocVersion_3.24.0        GenomeInfoDb_1.49.1      
-#> [63] BiocIO_1.23.3             UCSC.utils_1.9.0         
-#> [65] tibble_3.3.1              pillar_1.11.1            
-#> [67] rappdirs_0.3.4            htmltools_0.5.9          
-#> [69] R6_2.6.1                  dbplyr_2.6.0             
-#> [71] httr2_1.3.0               evaluate_1.0.5           
-#> [73] lattice_0.23-1            readr_2.2.0              
-#> [75] AnnotationHub_4.3.3       cigarillo_1.3.1          
-#> [77] png_0.1-9                 Rsamtools_2.29.0         
-#> [79] memoise_2.0.1             SparseArray_1.13.4       
-#> [81] xfun_0.62                 TCGAutils_1.33.3         
-#> [83] pkgconfig_2.0.3
+#> [37] otel_0.3.0                rstudioapi_0.19.0        
+#> [39] httr_1.4.9                tzdb_0.5.0               
+#> [41] rjson_0.2.23              BiocBaseUtils_1.15.1     
+#> [43] GenomicDataCommons_1.37.0 DBI_1.3.0                
+#> [45] cachem_1.1.0              stringr_1.6.0            
+#> [47] rvest_1.0.5               parallel_4.6.1           
+#> [49] AnnotationDbi_1.75.2      BiocManager_1.30.27      
+#> [51] XVector_0.53.0            restfulr_0.0.17          
+#> [53] vctrs_0.7.3               Matrix_1.7-6             
+#> [55] jsonlite_2.0.0            hms_1.1.4                
+#> [57] bit64_4.8.6               GenomicFeatures_1.65.0   
+#> [59] glue_1.8.1                codetools_0.2-20         
+#> [61] stringi_1.8.9             BiocVersion_3.24.0       
+#> [63] GenomeInfoDb_1.49.1       BiocIO_1.23.3            
+#> [65] UCSC.utils_1.9.0          tibble_3.3.1             
+#> [67] pillar_1.11.1             rappdirs_0.3.4           
+#> [69] htmltools_0.5.9           R6_2.6.1                 
+#> [71] dbplyr_2.6.0              httr2_1.3.0              
+#> [73] evaluate_1.0.5            lattice_0.23-1           
+#> [75] readr_2.2.0               AnnotationHub_4.3.3      
+#> [77] cigarillo_1.3.1           Rsamtools_2.29.0         
+#> [79] png_0.1-9                 memoise_2.0.1            
+#> [81] SparseArray_1.13.4        xfun_0.62                
+#> [83] TCGAutils_1.33.3          pkgconfig_2.0.3
 ```
