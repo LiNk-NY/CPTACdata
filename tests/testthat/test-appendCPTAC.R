@@ -63,10 +63,14 @@ test_that("appendCPTAC() adds a proteome with a valid sampleMap", {
     expect_identical(meta[["pdc_study_version"]], "2")
     expect_identical(meta[["pdc_study_uuid"]], "uuid-PDC000173")
     expect_s3_class(meta[["retrieved"]], "POSIXct")
-    expect_setequal(colnames(se), paste0(brcaPatients, "-01A"))
     expect_identical(SummarizedExperiment::assayNames(se), "log2_ratio")
-    # replicates ".1"/".2" collapse to the first
-    expect_identical(se[, "TCGA-C8-A131-01A"]$pdc_column, "C8-A131-01A.1")
+    # every replicate is kept, named by sample barcode and PDC suffix
+    expect_setequal(se$sample_submitter_id, paste0(brcaPatients, "-01A"))
+    expect_true(all(c("TCGA-C8-A131-01A.1", "TCGA-C8-A131-01A.2") %in%
+                    colnames(se)))
+    expect_identical(se[, "TCGA-C8-A131-01A.2"]$pdc_column, "C8-A131-01A.2")
+    expect_true("TCGA-BH-A18U-01A" %in% colnames(se))
+    expect_false(anyDuplicated(colnames(se)) > 0L)
 
     smap <- MultiAssayExperiment::sampleMap(res)
     smap <- smap[smap$assay == "CPTAC_Proteome", ]
@@ -78,14 +82,44 @@ test_that("appendCPTAC() adds a proteome with a valid sampleMap", {
     expect_identical(names(res2), names(res))
 })
 
+test_that("replicates = 'first' keeps one column per sample", {
+    localPDC()
+    mae <- mockMAE(brcaPatients, "brca")
+    res <- suppressMessages(
+        appendCPTAC(mae, fraction = "Proteome", replicates = "first")
+    )
+    se <- res[["CPTAC_Proteome"]]
+    expect_setequal(se$sample_submitter_id, paste0(brcaPatients, "-01A"))
+    expect_setequal(colnames(se),
+                    c("TCGA-BH-A18U-01A", "TCGA-C8-A131-01A.1",
+                      "TCGA-AO-A12B-01A.1", "TCGA-BH-A0C0-01A",
+                      "TCGA-A8-A08Z-01A"))
+    expect_identical(se[, "TCGA-C8-A131-01A.1"]$pdc_column, "C8-A131-01A.1")
+    expect_error(appendCPTAC(mae, replicates = "mean"), "should be")
+})
+
+test_that(".labelsToColnames() keeps PDC labels, adding TCGA- if missing", {
+    labels <- c("BH-A18U-01A", "C8-A131-01A.1", "C8-A131-01A.2",
+                "TCGA-24-1555-01A-32-2224-29")
+    expect_identical(
+        .labelsToColnames(labels),
+        c("TCGA-BH-A18U-01A", "TCGA-C8-A131-01A.1", "TCGA-C8-A131-01A.2",
+          "TCGA-24-1555-01A-32-2224-29")
+    )
+})
+
 test_that("appendCPTAC() matches full aliquot labels (phosphoproteome)", {
     localPDC()
     mae <- mockMAE(ovPatients, "ov")
     res <- suppressMessages(suppressWarnings(
         appendCPTAC(mae, project = "OV", fraction = "Phosphoproteome")
     ))
-    expect_identical(colnames(res[["CPTAC_PNNL_Phosphoproteome"]]),
+    se <- res[["CPTAC_PNNL_Phosphoproteome"]]
+    expect_identical(se$sample_submitter_id,
                      sort(paste0(ovPatients, "-01A")))
+    # aliquot barcode labels are used as-is
+    expect_identical(colnames(se), se$pdc_column)
+    expect_true(all(startsWith(colnames(se), se$sample_submitter_id)))
 })
 
 test_that("appendCPTAC() warns on studies without a matrix", {

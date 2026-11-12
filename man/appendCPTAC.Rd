@@ -8,6 +8,7 @@ appendCPTAC(
   mae,
   project = NULL,
   fraction = c("Proteome", "Phosphoproteome", "Glycoproteome"),
+  replicates = c("all", "first"),
   dry_run = FALSE
 )
 }
@@ -22,6 +23,11 @@ read from the \code{admin.disease_code} column of \code{colData(mae)}.}
 \code{"Phosphoproteome"} or \code{"Glycoproteome"}. Call \code{appendCPTAC} once per
 type to add several.}
 
+\item{replicates}{How to handle technical replicates, which the PDC marks
+with a \code{.1}, \code{.2} suffix on the matrix column. \code{"all"} (default) keeps
+every replicate as its own column; \code{"first"} keeps only the first
+replicate of each sample.}
+
 \item{dry_run}{If \code{TRUE}, download only sample metadata and return a
 one-row-per-study summary of what would be added.}
 }
@@ -33,11 +39,16 @@ experiment is a \code{SummarizedExperiment} with:
 \item One assay, named after the \code{data_type} of the study (e.g.
 \code{"log2_ratio"}), holding the PDC quantification matrix for the matched
 samples. Rows are genes or protein sites, and missing values are \code{NA}.
-\item Columns named by TCGA sample barcode (e.g. \verb{TCGA-24-1555-01A}), one per
-matched sample. Technical replicates are reduced to the first one.
+\item Columns named by the PDC matrix label, with \verb{TCGA-} added where the PDC
+leaves it out. Proteome labels are sample barcodes (e.g.
+\verb{TCGA-BH-A18U-01A}) and phosphoproteome labels are aliquot barcodes
+(e.g. \verb{TCGA-24-1555-01A-32-2224-29}). The PDC marks technical
+replicates with a \code{.1}, \code{.2} suffix, which is kept (e.g.
+\verb{TCGA-C8-A131-01A.1} and \verb{TCGA-C8-A131-01A.2}).
 \item \code{colData} with \code{case_submitter_id} (TCGA patient barcode),
-\code{aliquot_submitter_id}, \code{sample_type}, and \code{pdc_column} (the column
-label in the PDC matrix).
+\code{sample_submitter_id} (TCGA sample barcode, shared by the replicates
+of a sample), \code{aliquot_submitter_id}, \code{sample_type}, and \code{pdc_column}
+(the column label in the PDC matrix).
 \item \code{metadata} with \code{pdc_study_id}, \code{pdc_name}, \code{data_type}, \code{source} (the
 PDC GraphQL URL), \code{pdc_study_version} and \code{pdc_study_uuid} (the PDC
 version of the study and its identifier, which pins that version),
@@ -74,8 +85,8 @@ tumors, and adds them as new experiments with a correct \code{sampleMap}.
 \details{
 Only patients already in \code{colData(mae)} are added. Specimens are kept if
 they carry a TCGA barcode, are "Qualified" and not pooled. Each new
-experiment has one column per TCGA sample (e.g. \verb{TCGA-24-1555-01A});
-technical replicates are reduced to the first one. Missing values are
+experiment has one column per column of the PDC matrix, including every
+technical replicate unless \code{replicates = "first"}. Missing values are
 \code{NA}. The quantification is the PDC Common Data Analysis Pipeline value
 given by the \code{data_type} column of \link{cptacProjects} (log2 ratios to a common
 reference).

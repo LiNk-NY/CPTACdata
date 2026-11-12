@@ -152,11 +152,17 @@ S4Vectors::metadata(mae[["CPTAC_PNNL_Proteome"]])
 ```
 
 Rows are genes in the proteome. In the phosphoproteome they are RefSeq protein
-and site identifiers, such as `NP_000005.2:s710`. Columns are named by TCGA
-sample barcode. Missing values are stored as `NA`.
+and site identifiers, such as `NP_000005.2:s710`. Columns keep the labels of
+the PDC matrix, with `TCGA-` added where the PDC leaves it out: sample barcodes
+in the proteome and aliquot barcodes in the phosphoproteome. Missing values are
+stored as `NA`.
 
 Technical replicates of a sample carry a `.1`, `.2` suffix in the PDC matrix.
-Only the first replicate is kept.
+All replicates are kept, and the suffix stays in the column name, such as
+`TCGA-C8-A131-01A.1` and `TCGA-C8-A131-01A.2`. The
+`sample_submitter_id` column of `colData` gives the sample barcode shared by
+the replicates. Use `replicates = "first"` to keep only the first replicate of
+each sample.
 Patients who are in the object but missing from the PDC matrix get no column,
 and the append reports how many there are.
 
