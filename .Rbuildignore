@@ -2,3 +2,7 @@
 ^\.Rproj\.user$
 ^dev$
 ^data-raw$
+^inst/scripts/README_cache$
+^inst/scripts/README_files$
+^README_files$
+^TODO$
