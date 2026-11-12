@@ -5,6 +5,10 @@
 #' `MultiAssayExperiment` from `curatedTCGAData`. The main function is
 #' [appendCPTAC()]. The studies it can use are listed in [cptacProjects].
 #'
+#' [getCPTAC()] downloads the CPTAC cohorts that use their own patients,
+#' such as the CPTAC-3 discovery cohorts, as a new `MultiAssayExperiment`.
+#' They are listed in [cptacCohorts].
+#'
 #' @section Data use agreement:
 #' The PDC data are provided under the PDC Data Use Agreement, available at
 #' <https://proteomic.datacommons.cancer.gov/pdc/data-use-guidelines>. Before

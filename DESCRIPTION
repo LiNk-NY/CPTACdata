@@ -15,7 +15,10 @@ Description: Integrates proteomic data from the Clinical Proteomic
     It harmonizes TCGA barcodes with CPTAC case identifiers, constructs
     SummarizedExperiment objects whose colData holds the matched biospecimen
     identifiers and sample types, and appends the proteomic assays to the
-    MultiAssayExperiment.
+    MultiAssayExperiment. It also downloads the CPTAC-3 and CPTAC-2
+    Prospective cohorts, which use their own patients, as
+    MultiAssayExperiment objects with one experiment per PDC study and the
+    PDC clinical data as colData.
 License: Artistic-2.0
 URL: https://github.com/LiNk-NY/CPTACdata
 BugReports: https://github.com/LiNk-NY/CPTACdata/issues

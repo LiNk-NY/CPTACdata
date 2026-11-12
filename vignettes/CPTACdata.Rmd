@@ -19,7 +19,10 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 The Clinical Proteomic Tumor Analysis Consortium (CPTAC) profiled the
 proteomes of several hundred TCGA tumors. `CPTACdata` downloads those data
 from the Proteomic Data Commons (PDC) and appends them to a
-`MultiAssayExperiment` from `curatedTCGAData`.
+`MultiAssayExperiment` from `curatedTCGAData`. It also downloads the CPTAC
+cohorts that use their own patients as new `MultiAssayExperiment` objects;
+see the vignette "Downloading CPTAC cohorts as MultiAssayExperiment objects"
+(`vignette("CPTACcohorts", package = "CPTACdata")`).
 
 TCGA measured the genome and transcriptome of these tumors, and only a small
 panel of proteins with antibody arrays. Mass-spectrometry proteomics measures

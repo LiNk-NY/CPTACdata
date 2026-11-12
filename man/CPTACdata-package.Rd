@@ -11,6 +11,11 @@ Adds proteomic data from the Clinical Proteomic Tumor Analysis Consortium
 \code{MultiAssayExperiment} from \code{curatedTCGAData}. The main function is
 \code{\link[=appendCPTAC]{appendCPTAC()}}. The studies it can use are listed in \link{cptacProjects}.
 }
+\details{
+\code{\link[=getCPTAC]{getCPTAC()}} downloads the CPTAC cohorts that use their own patients,
+such as the CPTAC-3 discovery cohorts, as a new \code{MultiAssayExperiment}.
+They are listed in \link{cptacCohorts}.
+}
 \section{Data use agreement}{
 
 The PDC data are provided under the PDC Data Use Agreement, available at

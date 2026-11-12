@@ -324,12 +324,26 @@ appendCPTAC <- function(
     ifelse(startsWith(labels, "TCGA-"), labels, paste0("TCGA-", labels))
 }
 
-.buildCptacSE <- function(row, specimens, replicates = "all") {
+# One PDC study as a SummarizedExperiment. `matchColumns` maps matrix labels
+# to rows of `specimens` and `nameColumns` turns the kept labels into column
+# names; both default to the TCGA rules used by appendCPTAC().
+.buildCptacSE <- function(
+    row,
+    specimens,
+    replicates = "all",
+    matchColumns = .matchQuantColumns,
+    nameColumns = .labelsToColnames
+) {
     studyVersion <- .pdcStudyVersion(row[["pdc_study_id"]])
     quantMatrix <- .pdcQuantMatrix(row[["pdc_study_id"]], row[["data_type"]])
+    rowAnnotation <- attr(quantMatrix, "rowAnnotation")
+    if (!is.null(rowAnnotation)) {
+        rowAnnotation <- S4Vectors::DataFrame(rowAnnotation)
+    }
+    attr(quantMatrix, "rowAnnotation") <- NULL
     # PDC column order is arbitrary; sorting puts replicate ".1" before ".2"
     quantMatrix <- quantMatrix[, order(colnames(quantMatrix)), drop = FALSE]
-    specimenIndex <- .matchQuantColumns(colnames(quantMatrix), specimens)
+    specimenIndex <- matchColumns(colnames(quantMatrix), specimens)
     keep <- !is.na(specimenIndex)
     if (identical(replicates, "first")) {
         keep[keep] <- !duplicated(
@@ -350,9 +364,10 @@ appendCPTAC <- function(
     .reportUnmatched(specimens, sampleData, row[["pdc_study_id"]])
 
     quantMatrix <- quantMatrix[, keep, drop = FALSE]
-    colnames(quantMatrix) <- .labelsToColnames(sampleData[["pdc_column"]])
+    colnames(quantMatrix) <- nameColumns(sampleData[["pdc_column"]])
     SummarizedExperiment::SummarizedExperiment(
         assays = stats::setNames(list(quantMatrix), row[["data_type"]]),
+        rowData = rowAnnotation,
         colData = S4Vectors::DataFrame(
             sampleData,
             row.names = colnames(quantMatrix)
